@@ -2,7 +2,7 @@
   Heidenhain post processor configuration.
 */
 
-description = "Heidenhain TNC 151";
+description = "24K40 Heidenhain TNC 151";
 vendor = "Heidenhain";
 vendorUrl = "http://www.heidenhain.com";
 legal = "";
@@ -37,6 +37,7 @@ properties = {
   expandCycles: true, // expands unhandled cycles
   useRigidTapping: true, // rigid tapping
   useParametricFeed: false, // specifies that feed should be output using Q values
+  rapidMoveFeedRate: 3000, // specifies that feed should be output using Q values
 };
 
 // user-defined property definitions
@@ -45,6 +46,7 @@ propertyDefinitions = {
   expandCycles: { title: "Expand cycles", description: "If enabled, unhandled cycles are expanded.", type: "boolean" },
   useRigidTapping: { title: "Use rigid tapping", description: "Enable to allow rigid tapping.", type: "boolean" },
   useParametricFeed: { title: "Parametric feed", description: "Specifies the feed value that should be output using a Q value.", type: "boolean" },
+  rapidMoveFeedRate: { title: "Fast move feed rate", description: "Specifies G00 feed rate, set 0 to exclude F output", type: "number" },
 };
 
 var WARNING_WORK_OFFSET = 0;
@@ -214,6 +216,28 @@ function getFeed(f) {
     currentFeedId = undefined; // force Q feed next time
   }
   return feedOutput.format(f); // use feed value
+}
+
+function getRapidFeed(isLeadSpace, isEndSpace) {
+  var rate = properties.rapidMoveFeedRate;
+
+  if (rate < 0) {
+    error("Rapid feed rate parameter should be positive or 0");
+  }
+
+  var fmt = "F";
+
+  if (isLeadSpace) {
+    fmt = " F";
+  }
+
+  var result = rate === 0 ? "": fmt + rate;
+  
+  if (isEndSpace) {
+    result += " ";
+  }
+
+  return result;
 }
 
 function initializeActiveFeeds() {
@@ -430,18 +454,18 @@ function onSection() {
 
   if (!retracted && !insertToolCall) {
     if (getCurrentPosition().z < initialPosition.z) {
-      writeBlock("L" + zOutput.format(initialPosition.z) + " F9998");
+      writeBlock("L" + zOutput.format(initialPosition.z) + getRapidFeed(true, false));
     }
   }
 
   if (!machineConfiguration.isHeadConfiguration()) {
-    writeBlock("L" + xOutput.format(initialPosition.x) + yOutput.format(initialPosition.y) + " R0 F9998");
+    writeBlock("L" + xOutput.format(initialPosition.x) + yOutput.format(initialPosition.y) + " R0" + getRapidFeed(true, false));
     z = zOutput.format(initialPosition.z);
     if (z) {
-      writeBlock("L" + z + " R0 F9998");
+      writeBlock("L" + z + " R0" + getRapidFeed(true, false));
     }
   } else {
-    writeBlock("L" + xOutput.format(initialPosition.x) + yOutput.format(initialPosition.y) + zOutput.format(initialPosition.z) + " R0 F9998");
+    writeBlock("L" + xOutput.format(initialPosition.x) + yOutput.format(initialPosition.y) + zOutput.format(initialPosition.z) + " R0" + getRapidFeed(true, false));
   }
 
   if (hasParameter("operation-strategy") && (getParameter("operation-strategy") == "drill")) {
@@ -599,7 +623,7 @@ function onCycle() {
 
   if (cycle.clearance != undefined) {
     if (getCurrentPosition().z < cycle.clearance) {
-      writeBlock("L" + zOutput.format(cycle.clearance) + radiusCompensationTable.lookup(radiusCompensation) + " F9998");
+      writeBlock("L" + zOutput.format(cycle.clearance) + radiusCompensationTable.lookup(radiusCompensation) + getRapidFeed(true, false));
       setCurrentPositionZ(cycle.clearance);
     }
   }
@@ -647,11 +671,11 @@ function onCyclePoint(x, y, z) {
     // execute current cycle after this positioning block
     if (spatialFormat.areDifferent(getCurrentPosition().z, cycle.clearance)) { // old heidenhain cycles do not support "2nd set-up clearance"
       if (xy) {
-        writeBlock("L" + xy + " F9998");
+        writeBlock("L" + xy + getRapidFeed(true, false));
       }
-      writeBlock("L" + zOutput.format(cycle.clearance) + radiusCompensationTable.lookup(radiusCompensation) + " F9998 " + mFormat.format(99));
+      writeBlock("L" + zOutput.format(cycle.clearance) + radiusCompensationTable.lookup(radiusCompensation) + getRapidFeed(true, true) + mFormat.format(99));
     } else {
-      writeBlock("L" + xy + " F9998 " + mFormat.format(99));
+      writeBlock("L" + xy + getRapidFeed(true, true) + mFormat.format(99));
     }
   } else {
     expandCyclePoint(x, y, z);
@@ -672,7 +696,7 @@ function onRapid(x, y, z) {
   var xyz = xOutput.format(x) + yOutput.format(y) + zOutput.format(z);
   if (xyz) {
     pendingRadiusCompensation = -1;
-    writeBlock("L" + xyz + radiusCompensationTable.lookup(radiusCompensation) + " F9998");
+    writeBlock("L" + xyz + radiusCompensationTable.lookup(radiusCompensation) + getRapidFeed(true, false));
   }
   forceFeed();
 }
@@ -894,7 +918,7 @@ function writeRetract() {
     }
   }
   if (words.length > 0) {
-    writeBlock("L " + words.join(" ") + " R0 F9998 " + mFormat.format(91));
+    writeBlock("L " + words.join(" ") + " R0" + getRapidFeed(true, true) + mFormat.format(91));
   }
 }
 
