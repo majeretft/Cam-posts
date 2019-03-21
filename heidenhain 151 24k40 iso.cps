@@ -1,23 +1,15 @@
 /**
-  Copyright (C) 2012-2017 by Autodesk, Inc.
-  All rights reserved.
-
   Heidenhain ISO post processor configuration.
-
-  $Revision: 42145 3ef6ef136f68132df4d932bf16f29ac1ec1b893b $
-  $Date: 2018-09-28 16:13:20 $
-  
-  FORKID {43354140-D681-47d0-B056-9A0A277F620D}
 */
 
-description = "Heidenhain ISO";
+description = "24K40 Heidenhain TNC 151 ISO";
 vendor = "Heidenhain";
 vendorUrl = "http://www.heidenhain.com";
 legal = "Copyright (C) 2012-2017 by Autodesk, Inc.";
 certificationLevel = 2;
 minimumRevision = 40783;
 
-longDescription = "Generic milling post for Heidenhain ISO.";
+longDescription = "24K40 milling post for Heidenhain TNC 151 ISO";
 
 extension = "i";
 setCodePage("ascii");
