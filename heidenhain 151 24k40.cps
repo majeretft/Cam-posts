@@ -9,7 +9,7 @@ legal = "";
 certificationLevel = 2;
 minimumRevision = 40783;
 
-longDescription = "20K40 milling post for Heidenhain TNC 151";
+longDescription = "24K40 milling post for Heidenhain TNC 151";
 
 extension = "h";
 if (getCodePage() == 932) { // shift-jis is not supported
