@@ -67,8 +67,8 @@ var radiusCompensationTable = new Table(
 
 var xyzFormat = createFormat({ decimals: (unit == MM ? 3 : 4), forceSign: true, separator: decimalSeparator, trim: false });
 var abcFormat = createFormat({ decimals: 3, forceSign: true, scale: DEG });
-var feedFormat = createFormat({ decimals: (unit == MM ? 0 : 2), scale: (unit == MM ? 1 : 10), separator: decimalSeparator, trim: false });
-var rpmFormat = createFormat({ decimals: 0, separator: decimalSeparator, trim: false });
+var feedFormat = createFormat({ decimals: (unit == MM ? 0 : 2), scale: (unit == MM ? 1 : 10), separator: decimalSeparator });
+var rpmFormat = createFormat({ decimals: 3, separator: decimalSeparator, trim: false });
 var secFormat = createFormat({ decimals: 3, separator: decimalSeparator });
 var paFormat = createFormat({ decimals: 3, forceSign: true, scale: DEG, separator: decimalSeparator, trim: false });
 var angleFormat = createFormat({ decimals: 0, scale: DEG, separator: decimalSeparator, trim: false });
@@ -137,13 +137,13 @@ function onOpen() {
     "BEGIN PGM" + (programName ? (SP + programName) : "") + ((unit == MM) ? " MM" : " INCH")
   );
 
-  var tools = getToolTable();
-  if (tools.getNumberOfTools() > 0) {
-    for (var i = 0; i < tools.getNumberOfTools(); ++i) {
-      var tool = tools.getTool(i);
-      writeBlock("TOOL DEF " + tool.number + " L0 R" + xyzFormat.format(tool.diameter / 2.0));
-    }
-  }
+  // var tools = getToolTable();
+  // if (tools.getNumberOfTools() > 0) {
+  //   for (var i = 0; i < tools.getNumberOfTools(); ++i) {
+  //     var tool = tools.getTool(i);
+  //     writeBlock("TOOL DEF " + tool.number + " L0 R" + xyzFormat.format(tool.diameter / 2.0));
+  //   }
+  // }
 }
 
 function onComment(message) {
@@ -366,18 +366,22 @@ function onSection() {
     (tool.clockwise != getPreviousSection().getTool().clockwise);
 
   retracted = false; // specifies that the tool has been retracted to the safe plane
-  var newWorkOffset = isFirstSection() ||
-    (getPreviousSection().workOffset != currentSection.workOffset); // work offset changes
-  var newWorkPlane = isFirstSection() ||
-    !isSameDirection(getPreviousSection().getGlobalFinalToolAxis(), currentSection.getGlobalInitialToolAxis()) ||
-    (currentSection.isOptimizedForMachine() && getPreviousSection().isOptimizedForMachine() &&
-      Vector.diff(getPreviousSection().getFinalToolAxisABC(), currentSection.getInitialToolAxisABC()).length > 1e-4) ||
-    (!machineConfiguration.isMultiAxisConfiguration() && currentSection.isMultiAxis()) ||
-    (!getPreviousSection().isMultiAxis() && currentSection.isMultiAxis()); // force newWorkPlane between indexing and simultaneous operations
-  if (newWorkOffset || newWorkPlane) {
-    // retract to safe plane
-    writeRetract(Z);
-  }
+  // var newWorkOffset = isFirstSection() ||
+  //   (getPreviousSection().workOffset != currentSection.workOffset); // work offset changes
+  // var newWorkPlane = isFirstSection() ||
+  //   !isSameDirection(getPreviousSection().getGlobalFinalToolAxis(), currentSection.getGlobalInitialToolAxis()) ||
+  //   (currentSection.isOptimizedForMachine() && getPreviousSection().isOptimizedForMachine() &&
+  //     Vector.diff(getPreviousSection().getFinalToolAxisABC(), currentSection.getInitialToolAxisABC()).length > 1e-4) ||
+  //   (!machineConfiguration.isMultiAxisConfiguration() && currentSection.isMultiAxis()) ||
+  //   (!getPreviousSection().isMultiAxis() && currentSection.isMultiAxis()); // force newWorkPlane between indexing and simultaneous operations
+
+  writeBlock("TOOL DEF " + tool.number + " L0 R" + xyzFormat.format(tool.diameter / 2.0));
+  writeRetract(Z);
+
+  // if (newWorkOffset || newWorkPlane) {
+  //   // retract to safe plane
+  //   writeRetract(Z);
+  // }
 
   if (insertToolCall) {
     onCommand(COMMAND_STOP_SPINDLE);
@@ -399,8 +403,9 @@ function onSection() {
     //   }
     // }
 
+
     writeBlock(
-      "TOOL CALL " + tool.number + SP + getSpindleAxisLetter(machineConfiguration.getSpindleAxis()) + " S" + rpmFormat.format(spindleSpeed)
+      "TOOL CALL " + tool.number + SP + getSpindleAxisLetter(machineConfiguration.getSpindleAxis()) + " S " + rpmFormat.format(spindleSpeed)
     );
 
     onCommand(COMMAND_TOOL_MEASURE);
@@ -507,7 +512,7 @@ function onParameter(name, value) {
 
 function onSpindleSpeed(spindleSpeed) {
   writeBlock(
-    "TOOL CALL " + getSpindleAxisLetter(machineConfiguration.getSpindleAxis()) + " S" + rpmFormat.format(spindleSpeed)
+    "TOOL CALL " + getSpindleAxisLetter(machineConfiguration.getSpindleAxis()) + " S " + rpmFormat.format(spindleSpeed)
   );
 }
 
@@ -860,6 +865,25 @@ function onCommand(command) {
     case COMMAND_BREAK_CONTROL:
       return;
     case COMMAND_TOOL_MEASURE:
+      return;
+    case COMMAND_STOP_SPINDLE:
+      var stringId = getCommandStringId(command);
+      var mcode = mapCommand[stringId];
+      if (mcode) {
+        writeBlock("STOP" + SP + mFormat.format(mcode));
+      } else {
+        onUnsupportedCommand(command);
+      }
+      return;
+      case COMMAND_SPINDLE_CLOCKWISE:
+      case COMMAND_SPINDLE_COUNTERCLOCKWISE:
+        var stringId = getCommandStringId(command);
+        var mcode = mapCommand[stringId];
+        if (mcode != undefined) {
+          writeBlock("L R F" + SP + mFormat.format(mcode));
+        } else {
+          onUnsupportedCommand(command);
+        }
       return;
   }
 
