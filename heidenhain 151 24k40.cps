@@ -231,8 +231,8 @@ function getRapidFeed(isLeadSpace, isEndSpace) {
     fmt = " F";
   }
 
-  var result = rate === 0 ? "": fmt + rate;
-  
+  var result = rate === 0 ? "" : fmt + rate;
+
   if (isEndSpace) {
     result += " ";
   }
