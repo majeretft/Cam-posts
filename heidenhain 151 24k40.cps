@@ -57,6 +57,7 @@ var activeMovements; // do not use by default
 var workOffsetLabels = {};
 var nextLabel = 1;
 var retracted = false; // specifies that the tool has been retracted to the safe plane
+var decimalSeparator = ',';
 
 var radiusCompensationTable = new Table(
   [" R0", " RL", " RR"],
@@ -64,13 +65,13 @@ var radiusCompensationTable = new Table(
   "Invalid radius compensation"
 );
 
-var xyzFormat = createFormat({ decimals: (unit == MM ? 3 : 4), forceSign: true });
+var xyzFormat = createFormat({ decimals: (unit == MM ? 3 : 4), forceSign: true, separator: decimalSeparator, trim: false });
 var abcFormat = createFormat({ decimals: 3, forceSign: true, scale: DEG });
-var feedFormat = createFormat({ decimals: (unit == MM ? 0 : 2), scale: (unit == MM ? 1 : 10) });
-var rpmFormat = createFormat({ decimals: 0 });
-var secFormat = createFormat({ decimals: 3 });
-var paFormat = createFormat({ decimals: 3, forceSign: true, scale: DEG });
-var angleFormat = createFormat({ decimals: 0, scale: DEG });
+var feedFormat = createFormat({ decimals: (unit == MM ? 0 : 2), scale: (unit == MM ? 1 : 10), separator: decimalSeparator, trim: false });
+var rpmFormat = createFormat({ decimals: 0, separator: decimalSeparator, trim: false });
+var secFormat = createFormat({ decimals: 3, separator: decimalSeparator });
+var paFormat = createFormat({ decimals: 3, forceSign: true, scale: DEG, separator: decimalSeparator, trim: false });
+var angleFormat = createFormat({ decimals: 0, scale: DEG, separator: decimalSeparator, trim: false });
 var pitchFormat = createFormat({ decimals: (unit == MM ? 3 : 4), forceSign: true });
 var mFormat = createFormat({ prefix: "M", decimals: 0 });
 
