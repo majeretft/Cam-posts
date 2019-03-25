@@ -386,18 +386,18 @@ function onSection() {
       onCommand(COMMAND_BREAK_CONTROL);
     }
 
-    if (false) {
-      var zRange = currentSection.getGlobalZRange();
-      var numberOfSections = getNumberOfSections();
-      for (var i = getCurrentSectionId() + 1; i < numberOfSections; ++i) {
-        var section = getSection(i);
-        var _tool = section.getTool();
-        if (_tool.number != tool.number) {
-          break;
-        }
-        zRange.expandToRange(section.getGlobalZRange());
-      }
-    }
+    // if (false) {
+    //   var zRange = currentSection.getGlobalZRange();
+    //   var numberOfSections = getNumberOfSections();
+    //   for (var i = getCurrentSectionId() + 1; i < numberOfSections; ++i) {
+    //     var section = getSection(i);
+    //     var _tool = section.getTool();
+    //     if (_tool.number != tool.number) {
+    //       break;
+    //     }
+    //     zRange.expandToRange(section.getGlobalZRange());
+    //   }
+    // }
 
     writeBlock(
       "TOOL CALL " + tool.number + SP + getSpindleAxisLetter(machineConfiguration.getSpindleAxis()) + " S" + rpmFormat.format(spindleSpeed)
