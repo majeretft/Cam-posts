@@ -3,9 +3,9 @@
 */
 
 description = "24K40 Heidenhain TNC 151 ISO";
-vendor = "Heidenhain";
-vendorUrl = "http://www.heidenhain.com";
-legal = "Copyright (C) 2012-2017 by Autodesk, Inc.";
+vendor = "VTO ltd.";
+vendorUrl = "hozpm@mail.ru";
+legal = "Copyright (C) since 2019 by VTO ltd.";
 certificationLevel = 2;
 minimumRevision = 40783;
 

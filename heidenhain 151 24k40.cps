@@ -3,9 +3,9 @@
 */
 
 description = "24K40 Heidenhain TNC 151";
-vendor = "Heidenhain";
-vendorUrl = "http://www.heidenhain.com";
-legal = "";
+vendor = "VTO ltd.";
+vendorUrl = "hozpm@mail.ru";
+legal = "Copyright (C) since 2019 by VTO ltd.";
 certificationLevel = 2;
 minimumRevision = 40783;
 
