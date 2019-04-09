@@ -33,6 +33,7 @@ properties = {
   sequenceNumberIncrement: 1, // increment for sequence numbers
   optionalStop: true, // optional stop
   useRadius: false, // specifies that arcs should be output using the radius (R word) instead of the I, J, and K words.
+  correctorNumber: 1 // D corrector number, e.g.: D001
 };
 
 // user-defined property definitions
@@ -41,12 +42,13 @@ propertyDefinitions = {
   sequenceNumberIncrement: { title: "Sequence number increment", description: "The amount by which the sequence number is incremented by in each block.", group: 1, type: "integer" },
   optionalStop: { title: "Optional stop", description: "Outputs optional stop code during when necessary in the code.", type: "boolean" },
   useRadius: { title: "Radius arcs", description: "If yes is selected, arcs are outputted using radius values rather than IJK.", type: "boolean" },
+  correctorNumber: { title: "D corrector number, e.g.: D001", description: "D corrector number, e.g.: D001", type: "integer" }
 };
 
 var gFormat = createFormat({ prefix: "G", width: 2, zeropad: true, decimals: 1 });
 var mFormat = createFormat({ prefix: "M", width: 2, zeropad: true, decimals: 1 });
 var hFormat = createFormat({ prefix: "H", width: 2, zeropad: true, decimals: 1 });
-var dFormat = createFormat({ prefix: "D", width: 2, zeropad: true, decimals: 1 });
+var dFormat = createFormat({ prefix: "D", width: 3, zeropad: true, decimals: 0 });
 
 var xyzFormat = createFormat({ decimals: (unit == MM ? 3 : 4), forceDecimal: false, forceSign: false });
 var rFormat = xyzFormat; // radius
@@ -71,8 +73,9 @@ var iOutput = createVariable({ prefix: "I", force: true }, xyzFormat);
 var jOutput = createVariable({ prefix: "J", force: true }, xyzFormat);
 var kOutput = createVariable({ prefix: "K", force: true }, xyzFormat);
 
-var gMotionModal = createModal({}, gFormat); // modal group 1 // G0-G3, ...
-var gPlaneModal = createModal({ onchange: function () { gMotionModal.reset(); } }, gFormat); // modal group 2 // G17-19
+// var gMotionModal = createModal({}, gFormat); // modal group 1 // G0-G3, ...
+var gMotionModal = gFormat; // modal group 1 // G0-G3, ...
+var gPlaneModal = createModal({ onchange: function () { /*gMotionModal.reset();*/ } }, gFormat); // modal group 2 // G17-19
 var gAbsIncModal = createModal({}, gFormat); // modal group 3 // G90-91
 var gFeedModeModal = createModal({}, gFormat); // modal group 5 // G93-94
 var gUnitModal = createModal({ force: true }, gFormat); // modal group 6 // G70-71
@@ -289,7 +292,7 @@ function onSection() {
   }
 
   forceAny();
-  gMotionModal.reset();
+  // gMotionModal.reset();
 
   var initialPosition = getFramePosition(currentSection.getInitialPosition());
   if (!retracted) {
@@ -447,10 +450,10 @@ function onLinear(_x, _y, _z, feed) {
       writeBlock(gPlaneModal.format(17));
       switch (radiusCompensation) {
         case RADIUS_COMPENSATION_LEFT:
-          writeBlock(gMotionModal.format(1), gFormat.format(41), x, y, z, f);
+          writeBlock(gMotionModal.format(1), gFormat.format(41), dFormat.format(properties.correctorNumber), x, y, z, f);
           break;
         case RADIUS_COMPENSATION_RIGHT:
-          writeBlock(gMotionModal.format(1), gFormat.format(42), x, y, z, f);
+          writeBlock(gMotionModal.format(1), gFormat.format(42), dFormat.format(properties.correctorNumber), x, y, z, f);
           break;
         default:
           writeBlock(gMotionModal.format(1), gFormat.format(40), x, y, z, f);
@@ -527,20 +530,32 @@ function onCircular(clockwise, cx, cy, cz, x, y, z, feed) {
     switch (getCircularPlane()) {
       case PLANE_XY:
         writeBlock(
-          gAbsIncModal.format(90), iOutput.format(cx), jOutput.format(cy),
-          gAbsIncModal.format(90), gPlaneModal.format(17), gMotionModal.format(clockwise ? 2 : 3), feedOutput.format(feed)
+          gAbsIncModal.format(90),
+          gPlaneModal.format(17),
+          gMotionModal.format(clockwise ? 2 : 3),
+          iOutput.format(cx),
+          jOutput.format(cy),
+          feedOutput.format(feed)
         );
         break;
       case PLANE_ZX:
         writeBlock(
-          gAbsIncModal.format(90), iOutput.format(cx), kOutput.format(cz),
-          gAbsIncModal.format(90), gPlaneModal.format(18), gMotionModal.format(clockwise ? 2 : 3), feedOutput.format(feed)
+          gAbsIncModal.format(90),
+          gPlaneModal.format(18),
+          gMotionModal.format(clockwise ? 2 : 3),
+          iOutput.format(cx),
+          kOutput.format(cz),
+          feedOutput.format(feed)
         );
         break;
       case PLANE_YZ:
         writeBlock(
-          gAbsIncModal.format(90), jOutput.format(cy), kOutput.format(cz),
-          gAbsIncModal.format(90), gPlaneModal.format(19), gMotionModal.format(clockwise ? 2 : 3), feedOutput.format(feed)
+          gAbsIncModal.format(90),
+          gPlaneModal.format(19),
+          gMotionModal.format(clockwise ? 2 : 3),
+          jOutput.format(cy),
+          kOutput.format(cz),
+          feedOutput.format(feed)
         );
         break;
       default:
@@ -550,20 +565,41 @@ function onCircular(clockwise, cx, cy, cz, x, y, z, feed) {
     switch (getCircularPlane()) {
       case PLANE_XY:
         writeBlock(
-          gAbsIncModal.format(90), iOutput.format(cx), jOutput.format(cy),
-          gAbsIncModal.format(90), gPlaneModal.format(17), gMotionModal.format(clockwise ? 2 : 3), xOutput.format(x), yOutput.format(y), zOutput.format(z), feedOutput.format(feed)
+          gAbsIncModal.format(90),
+          gPlaneModal.format(17),
+          gMotionModal.format(clockwise ? 2 : 3),
+          xOutput.format(x),
+          yOutput.format(y),
+          zOutput.format(z),
+          iOutput.format(cx),
+          jOutput.format(cy),
+          feedOutput.format(feed)
         );
         break;
       case PLANE_ZX:
         writeBlock(
-          iOutput.format(cx), kOutput.format(cz),
-          gAbsIncModal.format(90), gPlaneModal.format(18), gMotionModal.format(clockwise ? 2 : 3), xOutput.format(x), yOutput.format(y), zOutput.format(z), feedOutput.format(feed)
+          gAbsIncModal.format(90),
+          gPlaneModal.format(18),
+          gMotionModal.format(clockwise ? 2 : 3),
+          xOutput.format(x),
+          yOutput.format(y),
+          zOutput.format(z),
+          iOutput.format(cx),
+          kOutput.format(cz),
+          feedOutput.format(feed)
         );
         break;
       case PLANE_YZ:
         writeBlock(
-          jOutput.format(cy), kOutput.format(cz),
-          gAbsIncModal.format(90), gPlaneModal.format(19), gMotionModal.format(clockwise ? 2 : 3), xOutput.format(x), yOutput.format(y), zOutput.format(z), feedOutput.format(feed)
+          gAbsIncModal.format(90),
+          gPlaneModal.format(19),
+          gMotionModal.format(clockwise ? 2 : 3),
+          xOutput.format(x),
+          yOutput.format(y),
+          zOutput.format(z),
+          jOutput.format(cy),
+          kOutput.format(cz),
+          feedOutput.format(feed)
         );
         break;
       default:
@@ -658,7 +694,7 @@ function writeRetract() {
         block += "Y" + xyzFormat.format(machineConfiguration.hasHomePositionY() ? machineConfiguration.getHomePositionY() : 0) + " ";
         break;
       case Z:
-        block += "Z" + xyzFormat.format(machineConfiguration.getRetractPlane()) + " ";
+        block += "Z" + xyzFormat.format(50) + " ";
         retracted = true; // specifies that the tool has been retracted to the safe plane
         break;
       default:
@@ -666,9 +702,9 @@ function writeRetract() {
         return;
     }
   }
-  gMotionModal.reset();
+  // gMotionModal.reset();
   if (block) {
-    writeBlock(gMotionModal.format(0), gFormat.format(40), gAbsIncModal.format(90), block + mFormat.format(91));
+    writeBlock(gMotionModal.format(0), gAbsIncModal.format(90), block);
   }
   zOutput.reset();
 }
