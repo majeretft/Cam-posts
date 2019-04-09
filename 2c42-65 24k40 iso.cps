@@ -29,24 +29,18 @@ allowedCircularPlanes = undefined; // allow any circular motion
 
 // user-defined properties
 properties = {
-  preloadTool: false, // preloads next tool on tool change if any
-  showSequenceNumbers: true, // show sequence numbers
   sequenceNumberStart: 1, // first sequence number
   sequenceNumberIncrement: 1, // increment for sequence numbers
   optionalStop: true, // optional stop
   useRadius: false, // specifies that arcs should be output using the radius (R word) instead of the I, J, and K words.
-  useM92: false // use M92 instead of M91
 };
 
 // user-defined property definitions
 propertyDefinitions = {
-  preloadTool: { title: "Preload tool", description: "Preloads the next tool at a tool change (if any).", type: "boolean" },
-  showSequenceNumbers: { title: "Use sequence numbers", description: "Use sequence numbers for each block of outputted code.", group: 1, type: "boolean" },
   sequenceNumberStart: { title: "Start sequence number", description: "The number at which to start the sequence numbers.", group: 1, type: "integer" },
   sequenceNumberIncrement: { title: "Sequence number increment", description: "The amount by which the sequence number is incremented by in each block.", group: 1, type: "integer" },
   optionalStop: { title: "Optional stop", description: "Outputs optional stop code during when necessary in the code.", type: "boolean" },
   useRadius: { title: "Radius arcs", description: "If yes is selected, arcs are outputted using radius values rather than IJK.", type: "boolean" },
-  useM92: { title: "Use M92", description: "If enabled, M91 is used instead of M91.", type: "boolean" }
 };
 
 var gFormat = createFormat({ prefix: "G", width: 2, zeropad: true, decimals: 1 });
@@ -54,10 +48,10 @@ var mFormat = createFormat({ prefix: "M", width: 2, zeropad: true, decimals: 1 }
 var hFormat = createFormat({ prefix: "H", width: 2, zeropad: true, decimals: 1 });
 var dFormat = createFormat({ prefix: "D", width: 2, zeropad: true, decimals: 1 });
 
-var xyzFormat = createFormat({ decimals: (unit == MM ? 3 : 4), forceDecimal: true, forceSign: true });
+var xyzFormat = createFormat({ decimals: (unit == MM ? 3 : 4), forceDecimal: false, forceSign: false });
 var rFormat = xyzFormat; // radius
 var abcFormat = createFormat({ decimals: 3, forceDecimal: true, scale: DEG });
-var feedFormat = createFormat({ decimals: (unit == MM ? 0 : 1), forceDecimal: true });
+var feedFormat = createFormat({ decimals: (unit == MM ? 0 : 1), forceDecimal: false });
 var toolFormat = createFormat({ decimals: 0 });
 var rpmFormat = createFormat({ decimals: 0 });
 var secFormat = createFormat({ decimals: 3 }); // seconds - range 0.001-99999.999
@@ -98,34 +92,14 @@ function writeBlock() {
   if (!text) {
     return;
   }
-  if (properties.showSequenceNumbers) {
-    writeWords2("N" + sequenceNumber, arguments);
-    sequenceNumber += properties.sequenceNumberIncrement;
-  } else {
-    writeWords(arguments);
-  }
+  writeWords2("N" + sequenceNumber, arguments);
+  sequenceNumber += properties.sequenceNumberIncrement;
 }
 
 function onOpen() {
   if (properties.useRadius) {
     maximumCircularSweep = toRad(90); // avoid potential center calculation errors for CNC
   }
-
-  // if (false) { // note: setup your machine here
-  //   var aAxis = createAxis({coordinate:0, table:false, axis:[1, 0, 0], range:[-360, 360], preference:1});
-  //   var cAxis = createAxis({coordinate:2, table:false, axis:[0, 0, 1], range:[-360, 360], preference:1});
-  //   machineConfiguration = new MachineConfiguration(aAxis, cAxis);
-
-  //   setMachineConfiguration(machineConfiguration);
-  //   optimizeMachineAngles2(0); // TCP mode
-  // }
-
-  /*
-    // NOTE: setup your home positions here
-    machineConfiguration.setRetractPlane(-20.415); // home position Z
-    machineConfiguration.setHomePositionX(-200); // home position X
-    machineConfiguration.setHomePositionY(-5); // home position Y
-  */
 
   if (!machineConfiguration.isMachineCoordinate(0)) {
     aOutput.disable();
@@ -139,18 +113,7 @@ function onOpen() {
 
   sequenceNumber = properties.sequenceNumberStart;
 
-  writeBlock(
-    "%" + programName, gUnitModal.format((unit == MM) ? 71 : 70)
-  );
-
-  { // stock - workpiece
-    var workpiece = getWorkpiece();
-    var delta = Vector.diff(workpiece.upper, workpiece.lower);
-    if (delta.isNonZero()) {
-      writeBlock(gFormat.format(30), gPlaneModal.format(17), "X" + xyzFormat.format(workpiece.lower.x) + " Y" + xyzFormat.format(workpiece.lower.y) + " Z" + xyzFormat.format(workpiece.lower.z));
-      writeBlock(gFormat.format(31), gAbsIncModal.format(90), "X" + xyzFormat.format(workpiece.upper.x) + " Y" + xyzFormat.format(workpiece.upper.y) + " Z" + xyzFormat.format(workpiece.upper.z));
-    }
-  }
+  writeWords(["%" + programName]);
 
   // absolute coordinates and feed per min
   writeBlock(gAbsIncModal.format(90), gFeedModeModal.format(94), gPlaneModal.format(17));
@@ -275,10 +238,6 @@ function getWorkPlaneMachineABC(workPlane) {
 }
 
 function onSection() {
-  var insertToolCall = isFirstSection() ||
-    currentSection.getForceToolChange && currentSection.getForceToolChange() ||
-    (tool.number != getPreviousSection().getTool().number);
-
   retracted = false; // specifies that the tool has been retracted to the safe plane
   var newWorkOffset = isFirstSection() ||
     (getPreviousSection().workOffset != currentSection.workOffset); // work offset changes
@@ -289,67 +248,13 @@ function onSection() {
     (!machineConfiguration.isMultiAxisConfiguration() && currentSection.isMultiAxis()) ||
     (!getPreviousSection().isMultiAxis() && currentSection.isMultiAxis() ||
       getPreviousSection().isMultiAxis() && !currentSection.isMultiAxis()); // force newWorkPlane between indexing and simultaneous operations
-  if (insertToolCall || newWorkOffset || newWorkPlane) {
+  if (newWorkOffset || newWorkPlane) {
     // retract to safe plane
     writeRetract(Z);
     writeBlock(gAbsIncModal.format(90));
   }
 
-  if (insertToolCall) {
-    forceWorkPlane();
-
-    onCommand(COMMAND_COOLANT_OFF);
-
-    if (!isFirstSection() && properties.optionalStop) {
-      onCommand(COMMAND_OPTIONAL_STOP);
-    }
-
-    if (tool.number > 99) {
-      warning(localize("Tool number exceeds maximum value."));
-    }
-
-    /*
-        writeBlock(
-          gFormat.format(99), "T" + tool.number, "L" + xyzFormat.format(tool.bodyLength), "R" + xyzFormat.format(tool.diameter/2)
-        );
-        */
-    gPlaneModal.reset();
-    writeBlock(
-      "T" + tool.number, gPlaneModal.format(17), sOutput.format(spindleSpeed)
-    );
-    var showToolZMin = false;
-    if (showToolZMin) {
-      if (is3D()) {
-        var numberOfSections = getNumberOfSections();
-        var zRange = currentSection.getGlobalZRange();
-        var number = tool.number;
-        for (var i = currentSection.getId() + 1; i < numberOfSections; ++i) {
-          var section = getSection(i);
-          if (section.getTool().number != number) {
-            break;
-          }
-          zRange.expandToRange(section.getGlobalZRange());
-        }
-      }
-    }
-
-    if (properties.preloadTool) {
-      var nextTool = getNextTool(tool.number);
-      if (nextTool) {
-        writeBlock(gFormat.format(51), "T" + toolFormat.format(nextTool.number));
-      } else {
-        // preload first tool
-        var section = getSection(0);
-        var firstToolNumber = section.getTool().number;
-        if (tool.number != firstToolNumber) {
-          writeBlock(gFormat.format(51), "T" + toolFormat.format(firstToolNumber));
-        }
-      }
-    }
-  }
-
-  if (insertToolCall ||
-    isFirstSection() ||
+  if (isFirstSection() ||
     (rpmFormat.areDifferent(spindleSpeed, sOutput.getCurrent())) ||
     (tool.clockwise != getPreviousSection().getTool().clockwise)) {
     if (spindleSpeed < 1) {
@@ -358,33 +263,8 @@ function onSection() {
     if (spindleSpeed > 99999) {
       warning(localize("Spindle speed exceeds maximum value."));
     }
-    writeBlock(
-      sOutput.format(spindleSpeed), mFormat.format(tool.clockwise ? 3 : 4)
-    );
+    writeBlock(sOutput.format(tool.clockwise ? spindleSpeed : -spindleSpeed));
   }
-
-  // wcs
-  /*
-  if (insertToolCall) { // force work offset when changing tool
-    currentWorkOffset = undefined;
-  }
-  var workOffset = currentSection.workOffset;
-  if (workOffset == 0) {
-    warningOnce(localize("Work offset has not been specified. Using G54 as WCS."), WARNING_WORK_OFFSET);
-    workOffset = 1;
-  }
-  if (workOffset > 0) {
-    if (workOffset > 6) {
-      var p = workOffset - 6; // 1->...
-      error(localize("Work offset out of range."));
-    } else {
-      if (workOffset != currentWorkOffset) {
-        writeBlock(gFormat.format(53 + workOffset)); // G54->G59
-        currentWorkOffset = workOffset;
-      }
-    }
-  }
-  */
 
   forceXYZ();
 
@@ -408,48 +288,22 @@ function onSection() {
     setRotation(remaining);
   }
 
-  // set coolant after we have positioned at Z
-  setCoolant(tool.coolant);
-
   forceAny();
   gMotionModal.reset();
 
   var initialPosition = getFramePosition(currentSection.getInitialPosition());
-  if (!retracted && !insertToolCall) {
+  if (!retracted) {
     if (getCurrentPosition().z < initialPosition.z) {
       writeBlock(gMotionModal.format(0), zOutput.format(initialPosition.z));
     }
   }
 
-  if (insertToolCall) {
-    gMotionModal.reset();
-    writeBlock(gPlaneModal.format(17));
-
-    if (!machineConfiguration.isHeadConfiguration()) {
-      writeBlock(
-        gAbsIncModal.format(90),
-        gMotionModal.format(0), xOutput.format(initialPosition.x), yOutput.format(initialPosition.y)
-      );
-      writeBlock(gMotionModal.format(0), zOutput.format(initialPosition.z));
-    } else {
-      writeBlock(
-        gAbsIncModal.format(90),
-        gMotionModal.format(0),
-        xOutput.format(initialPosition.x),
-        yOutput.format(initialPosition.y),
-        zOutput.format(initialPosition.z)
-      );
-    }
-
-    gMotionModal.reset();
-  } else {
-    writeBlock(
-      gAbsIncModal.format(90),
-      gMotionModal.format(0),
-      xOutput.format(initialPosition.x),
-      yOutput.format(initialPosition.y)
-    );
-  }
+  writeBlock(
+    gAbsIncModal.format(90),
+    gMotionModal.format(0),
+    xOutput.format(initialPosition.x),
+    yOutput.format(initialPosition.y)
+  );
   retracted = false;
 }
 
@@ -742,34 +596,6 @@ function onCircular(clockwise, cx, cy, cz, x, y, z, feed) {
   }
 }
 
-var currentCoolantMode;
-
-function setCoolant(coolant) {
-  if (coolant == currentCoolantMode) {
-    return; // coolant is already active
-  }
-
-  var m = undefined;
-  switch (coolant) {
-    case COOLANT_OFF:
-      m = 9;
-      break;
-    case COOLANT_FLOOD:
-      m = 8;
-      break;
-    default:
-      warning(localize("Coolant not supported."));
-      if (currentCoolantMode == COOLANT_OFF) {
-        return;
-      }
-      coolant = COOLANT_OFF;
-      m = 9;
-  }
-
-  writeBlock(mFormat.format(m));
-  currentCoolantMode = coolant;
-}
-
 var mapCommand = {
   COMMAND_STOP: 0,
   COMMAND_OPTIONAL_STOP: 1,
@@ -783,12 +609,6 @@ var mapCommand = {
 
 function onCommand(command) {
   switch (command) {
-    case COMMAND_COOLANT_ON:
-      setCoolant(COOLANT_FLOOD);
-      return;
-    case COMMAND_COOLANT_OFF:
-      setCoolant(COOLANT_OFF);
-      return;
     case COMMAND_START_SPINDLE:
       onCommand(tool.clockwise ? COMMAND_SPINDLE_CLOCKWISE : COMMAND_SPINDLE_COUNTERCLOCKWISE);
       return;
@@ -848,14 +668,12 @@ function writeRetract() {
   }
   gMotionModal.reset();
   if (block) {
-    writeBlock(gMotionModal.format(0), gFormat.format(40), gAbsIncModal.format(90), block + mFormat.format(properties.useM92 ? 92 : 91));
+    writeBlock(gMotionModal.format(0), gFormat.format(40), gAbsIncModal.format(90), block + mFormat.format(91));
   }
   zOutput.reset();
 }
 
 function onClose() {
-  onCommand(COMMAND_COOLANT_OFF);
-
   writeRetract(Z);
 
   if (properties.homeXYAtEnd) {
@@ -866,7 +684,6 @@ function onClose() {
 
   onImpliedCommand(COMMAND_END);
   onImpliedCommand(COMMAND_STOP_SPINDLE);
-  writeBlock(mFormat.format(30)); // stop program, spindle stop, coolant off
-
-  writeBlock("%" + programName, gUnitModal.format((unit == MM) ? 71 : 70));
+  writeBlock(mFormat.format(5));
+  writeBlock(mFormat.format(2));
 }
