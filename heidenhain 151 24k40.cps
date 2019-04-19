@@ -365,6 +365,8 @@ function onSection() {
     (tool.number != getPreviousSection().getTool().number) ||
     (tool.clockwise != getPreviousSection().getTool().clockwise);
 
+  var insertToolDef = isFirstSection() || tool.number != getPreviousSection().getTool().number;
+
   retracted = false; // specifies that the tool has been retracted to the safe plane
   // var newWorkOffset = isFirstSection() ||
   //   (getPreviousSection().workOffset != currentSection.workOffset); // work offset changes
@@ -375,7 +377,9 @@ function onSection() {
   //   (!machineConfiguration.isMultiAxisConfiguration() && currentSection.isMultiAxis()) ||
   //   (!getPreviousSection().isMultiAxis() && currentSection.isMultiAxis()); // force newWorkPlane between indexing and simultaneous operations
 
-  writeBlock("TOOL DEF " + tool.number + " L0 R" + xyzFormat.format(tool.diameter / 2.0));
+  if (insertToolDef)
+    writeBlock("TOOL DEF " + tool.number + " L0 R" + xyzFormat.format(tool.diameter / 2.0));
+
   writeRetract(Z);
 
   // if (newWorkOffset || newWorkPlane) {
@@ -875,15 +879,15 @@ function onCommand(command) {
         onUnsupportedCommand(command);
       }
       return;
-      case COMMAND_SPINDLE_CLOCKWISE:
-      case COMMAND_SPINDLE_COUNTERCLOCKWISE:
-        var stringId = getCommandStringId(command);
-        var mcode = mapCommand[stringId];
-        if (mcode != undefined) {
-          writeBlock("L R F" + SP + mFormat.format(mcode));
-        } else {
-          onUnsupportedCommand(command);
-        }
+    case COMMAND_SPINDLE_CLOCKWISE:
+    case COMMAND_SPINDLE_COUNTERCLOCKWISE:
+      var stringId = getCommandStringId(command);
+      var mcode = mapCommand[stringId];
+      if (mcode != undefined) {
+        writeBlock("L R F" + SP + mFormat.format(mcode));
+      } else {
+        onUnsupportedCommand(command);
+      }
       return;
   }
 
