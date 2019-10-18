@@ -1,0 +1,1154 @@
+
+;2/08/2007 GENNADY GUTMAN
+;Customer:AKAD ISRAEL
+;Controler:MAKINO
+;-------------------------------------Filters------------------------------------------------------
+; Post Processor ID Number =
+;Y 	Employs subroutines
+;  N	Uses internal subroutines
+;  N	Generates Separate Subroutine Program
+;Y	Compensation
+;Y	Matrix Transformation
+;Y	List Transformation
+;  N	Positioning Index
+;Y	Job Name Message
+;  N	Mirror option
+;  N 	Rotate option
+;  N	Incremental mode
+;Y      Constant Angle
+;Y      Variable Angle
+;Y      4 Axis
+;Y      E-group  
+;-----------------------------------------------------------------
+;GENNADY GUTMAN last modify 2/08/2007 in AKAD COMPANY
+;const_angle work only in comp=y
+;const angle can be change during job to diffrent angles
+;all angle value are insert parameter ''ang_const'' and used in @compensation
+;
+;
+;finish e-number with LATER working through extra parameters
+;
+; 03/12/2009 Alexei Translate 
+
+@init_post
+
+    global logical flag_first flag_p1 main_prog
+    global numeric ggcode co_ang<<1000>> xhome_new yhome_new trace_level
+    global numeric first_x first_y first_xx first_yy ang_const
+
+    num_user_procs  = 1
+    numeric_def_f   = '5.3'
+    integer_def_f   = '5.0(p)'
+    gcode_f         = '2.0(p)'
+    mcode_f         = '2.0(p)'
+    xpos_f          = '5.3'
+    ypos_f          = '5.3'
+    blknum_f        = '5.0(p)'
+    blknum_gen      = FALSE
+    blknum_exist    = TRUE
+    blknum          =    5
+    blknum_delta    =    5
+    blknum_max      = 32000
+    ggcode = 50
+    
+;  trace "all":5
+;  trace "@stop_tool":5
+  Input "Trace level : 0-None ; 5-All", trace_level
+  trace "all":trace_level
+
+endp
+;-------------------
+@start_of_file
+
+       ; before tools definition
+       ;   {'%'}; 03/12/2009 Alexei
+          {nb,'N'program_number' ('g_file_name')'}
+       if rotate_used
+          gcode = 69
+          {nb,' G'gcode}
+
+       endif
+       if mirror_used
+          {nb,' G70'}
+       endif
+     
+endp
+;-------------------
+ @start_program
+ endp
+;-------------------
+@end_program
+
+          {nb,'M30'}
+          main_prog = false
+endp
+;-------------------
+@end_of_file
+
+        ;  {nb,'%'}   ; 03/12/2009 Alexei
+
+endp
+;-------------------
+@relative_mode
+
+          gcode = 91
+          {nb,'G'gcode' '}
+          skipline = false
+    
+endp
+;-------------------
+@absolute_mode
+
+          gcode = 90
+          {nb,'G'gcode}
+          skipline = FALSE
+    
+endp
+;-------------------
+@wc_angle_status
+endp
+;-------------------
+@machine_plane
+endp
+;-------------------
+@call_proc
+endp
+;-------------------
+@call_prms
+
+          local numeric e_number
+          main_prog=true
+          e_number=tonum(e_group_name)
+    if sub_job eq 1; special for later with 1 path (depend on job option)
+       if E1 eq 0 and E2 eq 0 and E3 eq 0 and E4 eq 0
+         {nb,'E'e_number:integer_def_f,'D'offset_number}
+         ; {nb,'M98 P'label'('job_name')'}
+            {nb,'M98 P'label'('upper (job_name)')'}
+            {nb, ' ('upper(job_name)')'}
+       endif
+          if E1 ne 0
+            {nb,'E'E1:integer_def_f,' D',D1:integer_def_f}
+          {nb,'M98 P'label'('job_name')'}
+;        {nb,'M0'}
+       endif
+       if E2 ne 0
+          {nb,'E'E2:integer_def_f,' D',D2:integer_def_f}
+          {nb,'M98 P'label'('job_name')'}
+;         {nb,'M0'}
+       endif
+       if E3 ne 0
+          {nb,'E'E3:integer_def_f,' D',D3:integer_def_f}
+          {nb,'M98 P'label'('job_name')'}
+       endif
+       if E4 ne 0
+          {nb,'E'E4:integer_def_f,' D',D4:integer_def_f}
+          {nb,'M98 P'label'('job_name')'}
+       endif
+
+;      if p1 ne 0
+;         {nb,'E'e_number:integer_def_f,' D'p1}
+;         {nb,'M98 P'label'('job_name')'}
+;      endif
+
+      else
+          {nb,'E'e_number:integer_def_f,' D'offset_number}
+          {nb,'M98 P'label'('job_name')'}
+    endif
+    if proc_count gt 1
+          {' R'proc_count}
+    endif
+
+endp
+;-------------------
+@proc
+
+     if job_type eq 'constant_angle'
+          ang_const=const_angle
+     endif
+     if change(label)
+     {nl,' '}        ;Asher added
+          {nl,'N'label'('job_name')'}
+     endif
+
+endp
+;-------------------
+@end_proc
+
+          {nb,'M99'}
+         ; {nb}
+         ; {nb}
+     
+endp
+;----------------
+@loop
+ 
+          local integer var_num
+          var_num = loop_level + 20
+          {nb,'#'var_num'=0'}
+          {nb,'DOWHILE#'var_num'<'loop_count};'] DO'loop_level}  ; 03/12/2009 Alexei
+          {nb,'['}
+          SKIPLINE = false
+endp
+;----------------
+@end_loop
+
+          local integer var_num
+          var_num = loop_level + 20
+          {nb,'#'var_num'=#'var_num'+1]'}
+          ;{nb,'END 'loop_level}; 03/12/2009 Alexei
+    
+endp
+;----------------
+@def_tool
+endp
+;-------------------
+@wc_move
+
+          {nb}
+          gcode = 0
+          {'G'gcode' X'xpos' Y'ypos}
+        if job_type ne 'profile'
+          {[' U'upos],[' V'vpos]}
+        endif
+
+endp
+;-------------------
+@rapid_move
+endp
+;-------------------
+@wc_line
+
+          {nb}
+          gcode = 1
+          {[' G'gcode]}
+     if job_type eq '4_axis'    
+       if flag_p1 eq true
+          {' X'xpos' Y'ypos' U'upos' V'vpos' P1'}
+          flag_p1=false
+        else 
+          {' X'xpos' Y'ypos' U'upos' V'vpos}
+       endif 
+      else
+          {' X'xpos[' Y'ypos]}
+     endif
+
+endp
+;-------------------
+@line
+
+     if change(zpos)
+          change(gcode)=true
+        else
+          gcode = 1
+          {nb,[' G'gcode],[' X'xpos],[' Y'ypos]}
+     endif
+   
+endp
+;-------------------
+@wc_arc
+
+     if arc_direction eq CCW
+          gcode = 3
+       else         ; CW
+          gcode = 2
+     endif
+          {nb,[' G'gcode]}
+     if arc_size le 360
+          {[' X'xpos],[' Y'ypos],' I'xcenter_rel,' J'ycenter_rel}
+       else
+        if arc_size eq 360
+          {' I'xcenter_rel,' J'ycenter_rel}
+        endif
+     endif
+    
+endp
+;-------------------
+@compensation
+
+              if side eq comp_left
+                    gcode = 41
+                if job_type eq 'constant_angle';*
+                  if ang_const > 0
+                    ggcode = 52
+                  endif
+                  if ang_const < 0
+                    ggcode = 51
+                  endif
+                endif
+                    {nb,'G',gcode}
+              endif
+;--------------------------------------------
+              if side eq comp_right
+                     gcode = 42
+                if job_type eq 'constant_angle';*
+                  if ang_const > 0
+                     ggcode = 52
+                  endif
+                  if ang_const < 0
+                     ggcode = 51
+                  endif
+                endif    
+                     {nb,'G',gcode}
+              endif
+;--------------------------------------------------------
+              if side eq comp_off
+                     gcode = 40
+                     {nb,'G40'}
+                if job_type eq 'constant_angle'
+                     {' G50'}
+                endif
+              endif
+                     skipline=false
+              if job_type eq 'constant_angle';*
+                if ang_const ne 0
+                  if side ne comp_off
+                     {' G'ggcode:integer_def_f,' T'(abs(ang_const))}
+                  endif 
+                endif
+              endif    
+              if job_type eq '4_axis'    
+                     flag_p1=true
+              endif
+
+endp
+;-------------------
+@delay
+
+    gcode = 4
+    {nb,'G'gcode' P'delay_period:integer_def_f}
+    
+endp
+;-------------------
+@change_ref_point      ; 03/12/2009 Alexei
+
+   if ref_point_init 
+      ;{nb,'G0 G90 X',first_x' Y'first_y}   
+      {nb,'G0 G90 X',xhome' Y'yhome}
+      ;{nb,'G92 G54 X0. Y0.'} 
+     else
+      ;{nb,'G0 G90 X',first_x' Y'first_y}
+      {nb,'G0 G90 X',xhome' Y'yhome}
+      xhome_new=first_xx-xhome
+      yhome_new=first_yy-yhome
+      gcode = 92
+     ; {nb,'G'gcode' G54 X'xhome_new' Y'yhome_new}
+     
+   endif
+     {nb,'G92 G54 X0. Y0.'}
+  
+endp
+;-------------------
+@home_number
+
+    gcode = 53 + home_number
+    {nb,' G'gcode' '}
+;   skipline = false
+
+endp
+;-------------------
+@rotate
+
+    if rotate_cancel
+        gcode = 69
+        {nb,'G'gcode}
+      else
+        gcode = 68
+        {nb,'G'gcode' X0 Y0 G91 R'angle}
+        {nb,'G90'}
+    endif
+    
+endp
+;-------------------
+@fourth_axis
+endp
+;-------------------
+@wc_chng_tool
+endp
+;-------------------
+@message
+endp
+;-------------------
+@drill
+endp
+;-------------------
+@drill_point
+endp
+;-------------------
+@mirror
+
+    if mirror_type eq MIRROR_OFF
+            {nb,' G70'}
+      else
+            {nb,' G71'}
+        if mirror_type eq MIRROR_X
+            {'X1 Y0'}
+        endif
+        if mirror_type eq MIRROR_Y
+            {'X0 Y1'}
+        endif
+        if mirror_type eq MIRROR_XY
+            {'X1 Y1'}
+        endif
+    endif
+endp
+;-------------------
+@end_drill
+;nop
+endp
+;-------------------
+@halt_program
+        {'M01'}
+endp
+;--------------------
+@round_comp
+endp
+;--------------------
+@start_of_job
+
+       flag_first=true
+   if flag_first
+       first_x=insertion_point_x
+       first_y=insertion_point_y
+       first_xx=insertion_point_x
+       first_yy=insertion_point_y
+       flag_first=false
+   endif
+       flag_p1=false
+         
+endp
+;--------------------
+@end_of_job
+endp
+;--------------------
+@assign_axis
+endp
+;-------------------
+@call_simple_proc
+
+    active(message) = FALSE
+    active(parm1)   = FALSE
+    active(parm2)   = FALSE
+    active(parm3)   = FALSE
+    proc_count      = 1
+    call @call_proc
+    
+endp
+;-------------------
+@start_tool     
+endp
+;------------------
+@stop_tool
+
+ ;    if stop_type eq 0
+        {nb' M01'}
+;    endif
+
+endp
+;-------------------
+@wc_insert_wire
+
+    {nb,'M6'}
+    {nb,'M17'}
+    ggcode=0
+    
+endp
+;------------------
+@wc_cut_wire
+
+    {nb,'M7'}
+    {nb,'M18'}
+    
+endp
+;------------------
+@wc_chng_e_group
+endp
+;------------------
+;@wc_chng_condition
+;endp
+;------------------
+@wc_info
+endp
+;------------------
+@wc_abs_rel
+
+endp
+;------------------
+@line_on
+endp
+;------------------
+@wc_pos
+      
+              {nb}
+      if wc_macro eq 0
+              {nb,'G65 P8000'}
+              {' X',xpos}
+              {' Y',ypos}
+          if EE ne 0
+              {' E',EE}
+          endif
+          if DD ne 0
+              {' D',DD}
+          endif
+          if RR ne 0
+              {' R',RR}
+          endif
+          if AA ne 0
+              {' A',AA}
+          endif
+          if BB ne 0
+              {' B',BB}
+          endif
+          if CC ne 0
+              {' C',CC}
+          endif
+      endif
+      if wc_macro eq 1
+              {nb,'G65 P8001'}
+              {' X',xpos}
+              {' Y',ypos}
+          if EE ne 0
+              {' E',EE}
+          endif
+          if DD ne 0
+              {' D',DD}
+          endif
+          if RR ne 0
+              {' R',RR}
+          endif
+          if AA ne 0
+              {' A',AA}
+          endif
+          if BB ne 0
+              {' B',BB}
+          endif
+          if CC ne 0
+              {' C',CC}
+          endif
+      endif
+      if wc_macro eq 2
+              {nb,'G65 P8002'}
+              {' X',xpos}
+              {' Y',ypos}
+          if EE ne 0
+              {' E',EE}
+          endif
+          if DD ne 0
+              {' D',DD}
+          endif
+          if RR ne 0
+              {' R',RR}
+          endif
+          if AA ne 0
+              {' A',AA}
+          endif
+          if BB ne 0
+              {' B',BB}
+          endif
+          if CC ne 0
+              {' C',CC}
+          endif
+      endif
+      if wc_macro eq 3
+              {nb,'G65 P8003'}
+              {' X',xpos}
+              {' Y',ypos}
+          if EE ne 0
+              {' E',EE}
+          endif
+          if DD ne 0
+              {' D',DD}
+          endif
+          if RR ne 0
+              {' R',RR}
+          endif
+          if AA ne 0
+              {' A',AA}
+          endif
+          if BB ne 0
+              {' B',BB}
+          endif
+          if CC ne 0
+              {' C',CC}
+          endif
+      endif
+      if wc_macro eq 4
+              {nb,'G65 P8004'}
+              {' X',xpos}
+              {' Y',ypos}
+          if EE ne 0
+              {' E',EE}
+          endif
+          if DD ne 0
+              {' D',DD}
+          endif
+          if RR ne 0
+              {' R',RR}
+          endif
+          if AA ne 0
+              {' A',AA}
+          endif
+          if BB ne 0
+              {' B',BB}
+          endif
+          if CC ne 0
+              {' C',CC}
+          endif
+      endif
+      if wc_macro eq 5
+              {nb,'G65 P8005'}
+              {' X',xpos}
+              {' Y',ypos}
+          if EE ne 0
+              {' E',EE}
+          endif
+          if DD ne 0
+              {' D',DD}
+          endif
+          if RR ne 0
+              {' R',RR}
+          endif
+          if AA ne 0
+              {' A',AA}
+          endif
+          if BB ne 0
+              {' B',BB}
+          endif
+          if CC ne 0
+              {' C',CC}
+          endif
+      endif
+      if wc_macro eq 6
+              {nb,'G65 P8006'}
+              {' X',xpos}
+              {' Y',ypos}
+          if EE ne 0
+              {' E',EE}
+          endif
+          if DD ne 0
+              {' D',DD}
+          endif
+          if RR ne 0
+              {' R',RR}
+          endif
+          if AA ne 0
+              {' A',AA}
+          endif
+          if BB ne 0
+              {' B',BB}
+          endif
+          if CC ne 0
+              {' C',CC}
+          endif
+      endif
+      if wc_macro eq 7
+              {nb,'G65 P8007'}
+              {' X',xpos}
+              {' Y',ypos}
+          if EE ne 0
+              {' E',EE}
+          endif
+          if DD ne 0
+              {' D',DD}
+          endif
+          if RR ne 0
+              {' R',RR}
+          endif
+          if AA ne 0
+              {' A',AA}
+          endif
+          if BB ne 0
+              {' B',BB}
+          endif
+          if CC ne 0
+              {' C',CC}
+          endif
+      endif
+      if wc_macro eq 8
+              {nb,'G65 P8008'}
+              {' X',xpos}
+              {' Y',ypos}
+          if EE ne 0
+              {' E',EE}
+          endif
+          if DD ne 0
+              {' D',DD}
+          endif
+          if RR ne 0
+              {' R',RR}
+          endif
+          if AA ne 0
+              {' A',AA}
+          endif
+          if BB ne 0
+              {' B',BB}
+          endif
+          if CC ne 0
+              {' C',CC}
+          endif
+      endif
+      if wc_macro eq 9
+              {nb,'G65 P8009'}
+              {' X',xpos}
+              {' Y',ypos}
+          if EE ne 0
+              {' E',EE}
+          endif
+          if DD ne 0
+              {' D',DD}
+          endif
+          if RR ne 0
+              {' R',RR}
+          endif
+          if AA ne 0
+              {' A',AA}
+          endif
+          if BB ne 0
+              {' B',BB}
+          endif
+          if CC ne 0
+              {' C',CC}
+          endif
+      endif
+      if wc_macro eq 10
+              {nb,'G65 P8010'}
+              {' X',xpos}
+              {' Y',ypos}
+          if EE ne 0
+              {' E',EE}
+          endif
+          if DD ne 0
+              {' D',DD}
+          endif
+          if RR ne 0
+              {' R',RR}
+          endif
+          if AA ne 0
+              {' A',AA}
+          endif
+          if BB ne 0
+              {' B',BB}
+          endif
+          if CC ne 0
+              {' C',CC}
+          endif
+      endif
+      if wc_macro eq 11
+              {nb,'G65 P8011'}
+              {' X',xpos}
+              {' Y',ypos}
+          if EE ne 0
+              {' E',EE}
+          endif
+          if DD ne 0
+              {' D',DD}
+          endif
+          if RR ne 0
+              {' R',RR}
+          endif
+          if AA ne 0
+              {' A',AA}
+          endif
+          if BB ne 0
+              {' B',BB}
+          endif
+          if CC ne 0
+              {' C',CC}
+          endif
+      endif
+      
+endp
+;------------------
+@wc_pos_pnt
+
+  if wc_macro eq 0
+              {nb,'G65 P8000'}
+              {' X',xpos}
+              {' Y',ypos}
+          if EE ne 0
+              {' E',EE}
+          endif
+          if DD ne 0
+              {' D',DD}
+          endif
+          if RR ne 0
+              {' R',RR}
+          endif
+          if AA ne 0
+              {' A',AA}
+          endif
+          if BB ne 0
+              {' B',BB}
+          endif
+          if CC ne 0
+              {' C',CC}
+          endif
+      endif
+      if wc_macro eq 1
+              {nb,'G65 P8001'}
+              {' X',xpos}
+              {' Y',ypos}
+          if EE ne 0
+              {' E',EE}
+          endif
+          if DD ne 0
+              {' D',DD}
+          endif
+          if RR ne 0
+              {' R',RR}
+          endif
+          if AA ne 0
+              {' A',AA}
+          endif
+          if BB ne 0
+              {' B',BB}
+          endif
+          if CC ne 0
+              {' C',CC}
+          endif
+      endif
+      if wc_macro eq 2
+              {nb,'G65 P8002'}
+              {' X',xpos}
+              {' Y',ypos}
+          if EE ne 0
+              {' E',EE}
+          endif
+          if DD ne 0
+              {' D',DD}
+          endif
+          if RR ne 0
+              {' R',RR}
+          endif
+          if AA ne 0
+              {' A',AA}
+          endif
+          if BB ne 0
+              {' B',BB}
+          endif
+          if CC ne 0
+              {' C',CC}
+          endif
+      endif
+      if wc_macro eq 3
+              {nb,'G65 P8003'}
+              {' X',xpos}
+              {' Y',ypos}
+          if EE ne 0
+              {' E',EE}
+          endif
+          if DD ne 0
+              {' D',DD}
+          endif
+          if RR ne 0
+              {' R',RR}
+          endif
+          if AA ne 0
+              {' A',AA}
+          endif
+          if BB ne 0
+              {' B',BB}
+          endif
+          if CC ne 0
+              {' C',CC}
+          endif
+      endif
+      if wc_macro eq 4
+              {nb,'G65 P8004'}
+              {' X',xpos}
+              {' Y',ypos}
+          if EE ne 0
+              {' E',EE}
+          endif
+          if DD ne 0
+              {' D',DD}
+          endif
+          if RR ne 0
+              {' R',RR}
+          endif
+          if AA ne 0
+              {' A',AA}
+          endif
+          if BB ne 0
+              {' B',BB}
+          endif
+          if CC ne 0
+              {' C',CC}
+          endif
+      endif
+      if wc_macro eq 5
+              {nb,'G65 P8005'}
+              {' X',xpos}
+              {' Y',ypos}
+          if EE ne 0
+              {' E',EE}
+          endif
+          if DD ne 0
+              {' D',DD}
+          endif
+          if RR ne 0
+              {' R',RR}
+          endif
+          if AA ne 0
+              {' A',AA}
+          endif
+          if BB ne 0
+              {' B',BB}
+          endif
+          if CC ne 0
+              {' C',CC}
+          endif
+     endif
+     if wc_macro eq 6
+              {nb,'G65 P8006'}
+              {' X',xpos}
+              {' Y',ypos}
+          if EE ne 0
+              {' E',EE}
+          endif
+          if DD ne 0
+              {' D',DD}
+          endif
+          if RR ne 0
+              {' R',RR}
+          endif
+          if AA ne 0
+              {' A',AA}
+          endif
+          if BB ne 0
+              {' B',BB}
+          endif
+          if CC ne 0
+              {' C',CC}
+          endif
+      endif
+      if wc_macro eq 7
+              {nb,'G65 P8007'}
+              {' X',xpos}
+              {' Y',ypos}
+          if EE ne 0
+              {' E',EE}
+          endif
+          if DD ne 0
+              {' D',DD}
+          endif
+          if RR ne 0
+              {' R',RR}
+          endif
+          if AA ne 0
+              {' A',AA}
+          endif
+          if BB ne 0
+              {' B',BB}
+          endif
+          if CC ne 0
+              {' C',CC}
+          endif
+      endif
+      if wc_macro eq 8
+              {nb,'G65 P8008'}
+              {' X',xpos}
+              {' Y',ypos}
+          if EE ne 0
+              {' E',EE}
+          endif
+          if DD ne 0
+              {' D',DD}
+          endif
+          if RR ne 0
+              {' R',RR}
+          endif
+          if AA ne 0
+              {' A',AA}
+          endif
+          if BB ne 0
+              {' B',BB}
+          endif
+          if CC ne 0
+              {' C',CC}
+          endif
+      endif
+      if wc_macro eq 9
+              {nb,'G65 P8009'}
+              {' X',xpos}
+              {' Y',ypos}
+          if EE ne 0
+              {' E',EE}
+          endif
+          if DD ne 0
+              {' D',DD}
+          endif
+          if RR ne 0
+              {' R',RR}
+          endif
+          if AA ne 0
+              {' A',AA}
+          endif
+          if BB ne 0
+              {' B',BB}
+          endif
+          if CC ne 0
+              {' C',CC}
+          endif
+      endif
+      if wc_macro eq 10
+              {nb,'G65 P8010'}
+              {' X',xpos}
+              {' Y',ypos}
+          if EE ne 0
+              {' E',EE}
+          endif
+          if DD ne 0
+              {' D',DD}
+          endif
+          if RR ne 0
+              {' R',RR}
+          endif
+          if AA ne 0
+              {' A',AA}
+          endif
+          if BB ne 0
+              {' B',BB}
+          endif
+          if CC ne 0
+              {' C',CC}
+          endif
+      endif
+      if wc_macro eq 11
+              {nb,'G65 P8011'}
+              {' X',xpos}
+              {' Y',ypos}
+          if EE ne 0
+              {' E',EE}
+          endif
+          if DD ne 0
+              {' D',DD}
+          endif
+          if RR ne 0
+              {' R',RR}
+          endif
+          if AA ne 0
+              {' A',AA}
+          endif
+          if BB ne 0
+              {' B',BB}
+          endif
+          if CC ne 0
+              {' C',CC}
+          endif
+      endif
+      
+endp
+;------------------
+@change_wire
+endp
+
+@turning
+endp
+
+@feed_spin
+endp
+
+@turn_proc
+endp
+
+@turn_endproc
+endp
+
+@end_job_procs
+endp
+
+@turn_drill
+endp
+
+@thread
+endp
+
+@groove
+endp
+
+@turn_opt_parms
+endp
+
+@change_tool
+endp
+
+@arc
+endp
+
+@m_feed_spin
+endp
+
+@line_4x
+endp
+
+@move_4x
+endp
+
+@turn_change_tool
+endp
+
+@drill4x_pnt
+endp
+
+@rotary_info
+endp
+
+@init_cpos
+endp
+
+@move4x_dir
+endp
+
+@line4x_dir
+endp
+
+@move4x_polar
+endp
+
+@line4x_polar
+endp
+
+@arc4x_polar
+endp
+
+@move4x_cartesian
+endp
+
+@line4x_cartesian
+endp
+
+@arc4x_cartesian
+endp
+
+@drill4x_polar
+endp
+
+@drill4x_cartesian
+endp
+;-----------------------------
+@wc_g49_arc
+ {nb,'G49'}
+ skipline=false
+endp
+;-----------------------------
+@wc_program_plane
+endp
+@wc_finish_info
+endp
+;-----------------------------
+;-----------------------------
+@programming_mode
+
+Endp
+;-----------------------------
+@wc_chng_condition
+
+endp
+;-----------------------------
+
+
+
+
+
+
+

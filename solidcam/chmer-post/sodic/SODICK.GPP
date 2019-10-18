@@ -1,0 +1,776 @@
+;
+; ---------------------------------------------------------------------
+
+; Copyright (c) 1985-1990, CADtech Ltd.  All rights reserved.
+;
+@init_post
+    global logical g0_usd, first_time prnt_d
+    global string offset_radius_f
+;   global numeric tool_diam<<30>>,ggcode,angle_buf,ver_angle,cond_d
+    global numeric ggcode,angle_buf,ver_angle,cond_d
+
+    global integer num_chng_tool, num_job mone
+    global integer gg1
+    global logical flag_call_prms
+    global logical flag_call_prms1
+    global logical flag_call_prms2
+    global logical flag_g41_g42
+    global logical flag_g43 first_time
+    global logical flag_m53
+    global logical flag_diameter
+    global logical print_g44
+    global string d_f
+    global string H_f
+    global numeric abs_xhome
+    global numeric abs_yhome
+    global numeric save_x_insert
+    global numeric save_y_insert
+    global integer mcode51
+    global integer enum
+
+    num_user_procs  = 1
+    numeric_def_f   = '5.5'
+    integer_def_f   = '5.0(p)'
+    gcode_f         = '2.0(p)'
+    mcode_f         = '2.0(p)'
+    xpos_f          = '5.5'
+    ypos_f          = '5.5'
+;   zpos_f          = '5.5'
+;   feed_f          = '4.0(p)'
+    offset_radius_f = '5.0(*1000p)'
+    num_chng_tool   = 1
+    num_job         = 1
+    blknum_f        = '5.0(p)'
+    blknum_gen      = FALSE
+    blknum_exist    = TRUE
+    blknum          =    5
+    blknum_delta    =    5
+    blknum_max      = 32000
+    d_f             = '3.0(p*1000)'
+    h_f             = '3.0(p)'
+    ggcode = 30
+    angle_buf = 50
+    flag_g41_g42 = false
+    flag_g43 = true
+    abs_xhome = 0
+    abs_yhome = 0
+    flag_call_prms2 = true
+trace"all":5
+endp
+
+;-------------------
+
+@start_of_file
+  print "WARNING: THIS IS NOT A PRODUCTION READY POST AND MUST BE MODIFIED TO THE MACHINE TOOL REQUIREMENTS BEFORE USE."
+;{nb,'            ON  OFF IP  HP  MA SV  V   SF   C  WT  WS   WP   WC'}
+;{nb,'C000 =      002 000 000 001 00 00  03  0000 00 000 000  000  000'}
+;{nb,'C001 =      00 000  00  00 00 00  00  00 00  00 00  00  000'}
+;{nb,'H000 =  +00000000  H001 =  +00000000  H002 =  +00000000'}
+;{nb,'H003 =  +00000000  H004 =  +00000000  H005 =  +00000000'}
+endp
+
+;-------------------
+
+
+ @start_program
+     ; after tools definition
+     g0_usd = false
+     call @home_number
+ endp
+
+;-------------------
+
+@end_program
+    {nb, 'M02'}
+endp
+
+;-------------------
+
+@end_of_file
+    {NB'%'}
+endp
+
+;-------------------
+
+@relative_mode
+    gcode = 91
+    {nb, 'G'gcode, ' '}
+    skipline = FALSE
+endp
+
+;-------------------
+
+@absolute_mode
+    gcode = 90
+    {nb, 'G'gcode}
+    skipline = FALSE
+endp
+
+;-------------------
+
+@machine_plane
+;nop
+endp
+
+;-------------------
+
+@call_proc
+        {nb, 'M98 P'label}
+       if proc_count gt 1 then
+        {' R'proc_count}
+    endif
+    {[' ('message, ')']}
+endp
+
+@call_prms
+;{nb, 'M P' call_prms<<2>>}
+;{nb, 'M P' cond_d}
+;{nb, 'M P' chng_cond<<3,11>>}
+
+
+;  {nb,'F' call_prms<<3>> }
+   if call_prms<<4>> ne 0
+        if call_prms<<4>> > 0
+            gg1 = 52
+         endif
+        if call_prms<<4>> < 0
+            gg1 = 51
+        endif
+       {nb,'G'gcode ' T' call_prms<<4>> }
+{nb,'G'gcode call_prms<<3>> }
+    endif
+;mmmmmmmmmmmmm
+    if job_type eq 'profile'
+        if (tonum(chng_cond<<3,11>>)) <> call_prms<<2>>
+             cond_d = call_prms<<2>>
+             if change(cond_d)
+                 cond_d=cond_d/2
+                 {nb 'm___H'cond_d:d_f}
+             endif
+              flag_call_prms2 = false
+        endif
+        {nb, 'M98 P'label}
+;{nb, 'M98 P' call_prms<<2>>}
+;{nb, 'M98 P' cond_d }
+;{nb, 'M98 P' chng_cond<<3,11>>  }
+
+;{nb, 'M98 P' d_f} 
+
+    else
+;       if call_prms_num eq 4
+            if (tonum(chng_cond<<3,11>>)) <> call_prms<<2>>
+                 cond_d = call_prms<<2>>
+                 if change(cond_d)
+                     cond_d=cond_d/2
+                     {nb 'H'cond_d:d_f}
+                 endif
+            endif
+            {nb, 'M98 P'label }
+;       endif
+    endif
+    flag_call_prms = true
+    flag_call_prms1 = true
+;   {[' ('message, ')']}
+
+endp
+
+
+
+
+;-------------------
+
+@proc
+    {nl, 'N'label}  ;changed 28.9.94
+
+endp
+
+;-------------------
+
+@end_proc
+    if first_time
+        xpos = save_x_insert
+        ypos = save_y_insert
+        {nb,'G0 X'xpos ' Y'ypos}
+        first_time = false
+    endif
+    {nb,'T83'}
+    {nb,'T97'}
+    {nb, 'M99'}
+endp
+
+;----------------
+
+@loop
+    blknum_gen      = TRUE
+     {nb, '(START LOOP)'}
+    blknum_gen      = FALSE
+endp
+
+;----------------
+
+@end_loop
+    {nb 'M99 P'start_line ' R'loop_count}
+endp
+
+;----------------
+
+@def_tool
+;nop
+endp
+
+;-------------------
+
+@wc_move
+        {nb}
+        gcode = 0
+;*      if change(gcode) then
+            {'G'gcode}
+;{nb 'M99 P' gcode}
+;*      else
+;*          {'  '}
+;*      endif
+        {[' X'xpos], [' Y'ypos]}
+        if job_type ne 'profile' then
+            {[' U'upos],[' V'vpos]}
+
+        endif
+
+endp
+
+
+@rapid_move
+
+endp
+
+;-------------------
+
+@wc_line
+     local logical flag_print_ang
+     local integer i
+     local numeric d_ang
+        if change(xpos) or change(ypos) or change(upos) or change(vpos) or p_angle
+            {nb}
+        endif
+        if change(xpos) or change(ypos) or change(upos) or change(vpos)
+            gcode = 1
+            if change(gcode) then
+                {' G'gcode}
+            else
+                {'  '}
+            endif
+        endif
+        {[' X'xpos], [' Y'ypos]}
+        if job_type eq '4_X' then
+            { [' U'upos], [' V'vpos]}
+        endif
+
+
+if job_type eq 'constant_angle'
+  if p_angle eq positive or p_angle eq negative
+     if finish_num > 1
+         i = 1
+         while i <= finish_num
+             d_ang = ang_prms<<i>> - ang_prms<<(i+1)>>
+             i = i + 1
+             if d_ang <> 0
+                flag_print_ang = true
+             else
+                flag_print_ang = false
+             endif
+         endw
+         if p_angle eq positive
+             gcode = 52
+             if flag_print_ang eq false
+;                 {' G',gcode ' A',(abs(ang_prms<<1,1>>))}
+                  {' G',gcode ' A', call_prms<<4>> }
+             endif
+         endif
+         if p_angle eq negative
+             gcode = 51
+             if flag_print_ang eq false
+                  {' G',gcode ' A',(abs(ang_prms<<1,1>>))}
+             endif
+         endif
+      endif
+   endif
+
+     if const_angle > 0
+        gcode = 52
+     endif
+
+     if const_angle < 0
+        gcode = 51
+     endif
+     if const_angle == 0
+        gcode = 50
+     endif
+     if p_angle eq true
+        {' G',gcode ' A',(abs(const_angle))}
+     endif
+endif
+endp
+
+@line
+    {nb}
+    gcode = 1
+    if change(gcode) then
+        {' G'gcode}
+     else
+        {'  '}
+     endif
+     {[' X'xpos], [' Y'ypos]}
+endp
+;-------------------
+
+@wc_arc
+    if arc_direction eq CCW then
+        gcode = 3
+    else         ; CW
+        gcode = 2
+    endif
+    if change(gcode) then
+        {NB' G'gcode}
+    else
+        {NB}
+    endif
+
+    {[' X'xpos] [' Y'ypos],' I'xcenter_rel:'5.5', ' J'ycenter_rel:'5.5' }
+endp
+
+;-------------------
+
+@compensation
+    if side eq COMP_LEFT then
+        gcode = 41
+    endif
+    if side eq COMP_RIGHT then
+        gcode = 42
+    endif
+    if side eq COMP_OFF then
+        gcode = 40
+    endif
+    {nb, ' G'gcode}
+    skipline=false
+endp
+
+;-------------------
+
+@delay
+    gcode = 4
+    {nb 'G'gcode, ' P'delay_period:integer_def_f}
+endp
+
+;-------------------
+
+@change_ref_point
+    ; Given in absolute mode
+;   if g0_usd
+;       xpos = 0
+;       ypos = 0
+;       first_time = false
+;       call @Wc_move
+;   endif
+;    g0_usd = true
+     abs_xhome = abs_xhome + xhome
+     abs_yhome = abs_yhome + yhome
+
+     {nb,'G'(53+home_number)}
+     xpos = abs_xhome
+     ypos = abs_yhome
+     change(vpos) = false
+     change(upos) = false
+     call @wc_move
+     {nb,'G59'}
+     gcode = 92
+     {nb, 'G'gcode, ' X0 Y0'}
+endp
+
+;-------------------
+
+@home_number
+    gcode = 53 + home_number
+    {nb, ' G'gcode' '}
+;   skipline = false
+endp
+
+;-------------------
+
+@rotate
+    if rotate_cancel then
+        gcode = 69
+        {nb, 'G'gcode}
+    else
+        gcode = 68
+        {nb, 'G'gcode, ' G91 R'angle}
+        {nb, 'G90'}
+    endif
+endp
+
+;-------------------
+
+@fourth_axis
+;nop
+endp
+
+;-------------------
+
+@wc_chng_tool
+                ;  ==> tool_number:0 tool_offset:0.000 first_tool:false
+;              { nb' D'tool_number}
+;       first_time=true
+
+endp
+
+;-------------------
+@message
+    {nb, '(', message, ')'}
+endp
+
+;-------------------
+
+@drill
+;nop
+endp
+
+;-------------------
+
+@drill_point
+;nop
+endp
+
+;-------------------
+
+@mirror
+    if mirror_type eq MIRROR_OFF then
+        {nb, 'G96'}
+    else
+
+        if mirror_type eq MIRROR_X then
+            {'G93'}
+        endif
+        if mirror_type eq MIRROR_Y then
+            {'G94'}
+        endif
+        if mirror_type eq MIRROR_XY then
+            {'G95'}
+        endif
+    endif
+endp
+
+;-------------------
+
+@end_drill
+;nop
+endp
+
+;-------------------
+
+@halt_program
+    {' M0'}
+endp
+
+;--------------------
+
+@round_comp
+    ; NOP
+endp
+
+;--------------------
+
+@start_of_job
+  num_job = num_job + 1
+  if left(job_name,1) eq 'X'
+       job_type = '4_X'
+  endif
+     first_time = true
+endp
+
+;--------------------
+
+@end_of_job
+
+endp
+
+;--------------------
+
+@assign_axis
+    ;   TBD
+endp
+
+;     =======================
+;     USER DEFINED PROCEDURES
+;     =======================
+
+@call_simple_proc
+    active(message) = FALSE
+    active(parm1)   = FALSE
+    active(parm2)   = FALSE
+    active(parm3)   = FALSE
+    proc_count      = 1
+    call @call_proc
+endp
+
+;-------------------
+
+@start_tool
+endp
+
+;-------------------
+;mmmmmmmmmmmmmmm
+@stop_tool
+    if stop_type eq 1 then
+ ;      {nb' M1'}
+ ;   else
+       {nb' M00'}
+    endif
+endp
+
+@wc_insert_wire
+    if first_time
+        gcode = 92
+        {nb,'G'gcode ' X'xpos ' Y'ypos}
+        first_time = false
+        {nb,'G29'}
+    endif
+    {nb'T84'}
+    {nb'T82'}
+    {nb'T96'}
+    {nb'T86'}
+endp
+
+;------------------
+
+@wc_cut_wire
+
+     {nb,'T90'}
+endp
+
+@wc_chng_e_group
+     enum = tonum(e_group_name)
+;*   {nb,e_group_name }
+     prnt_d = true
+endp
+
+@wc_chng_condition
+    local numeric diam_eter
+    diam_eter = tonum(chng_cond<<3,14>>)
+;mmmmmmmmmmmmmmmm
+
+{nb,e_group_name}
+;*{nb,'(            ON  OFF IP  HP  MA SV  V   SF   C  WT  WS   WP   WC )'}
+
+;*{nb,'C',C200,  ' =      002 000 000 001 00 00  03  0000 00 000 000  000  000'}
+               ;  ==> lower_guide:0.000 upper_guide:0.000 zero_plane:0.000 upper_plane:0.000
+
+  {nb,'H' diam_eter} 
+;{nb,'x' (chng_cond<<3,14>>)}
+;{nb,'x' tonum(chng_cond<<3,14>>)}
+
+
+endp
+@wc_info
+
+endp
+
+@wc_abs_rel
+endp
+@line_on
+endp
+
+@wc_pos
+endp
+
+@wc_pos_pnt
+
+       {nb}
+        gcode = 0
+        if change(gcode) then
+            {'G'gcode}
+        else
+            {'  '}
+        endif
+        {[' X'xpos], [' Y'ypos]}
+     if wc_macro eq 0
+         {nb, 'G65 P8000'}
+     endif
+
+     if wc_macro eq 1
+        {nb, 'G65 P8001'}
+     endif
+     if wc_macro eq 2
+        {nb, 'G65 P8002'}
+     endif
+     if wc_macro eq 3
+        {nb, 'G65 P8003'}
+     endif
+     if wc_macro eq 4
+        {nb, 'G65 P8004'}
+     endif
+     if wc_macro eq 5
+        {nb, 'G65 P8005'}
+     endif
+     if wc_macro eq 6
+        {nb, 'G65 P8006'}
+     endif
+     if wc_macro eq 7
+        {nb, 'G65 P8007'}
+     endif
+     if wc_macro eq 8
+        {nb, 'G65 P8008'}
+     endif
+     if wc_macro eq 9
+        {nb, 'G65 P8009'}
+     endif
+     if wc_macro eq 10
+        {nb, 'G65 P8010'}
+     endif
+     if wc_macro eq 11
+        {nb, 'G65 P8011'}
+     endif
+     if XX ne 0
+          {' X',XX}
+     endif
+
+          if YY ne 0
+              {' Y',YY}
+          endif
+          if EE ne 0
+              {' E',EE}
+          endif
+          if DD ne 0
+              {' D',DD}
+          endif
+          if RR ne 0
+              {' R',RR}
+          endif
+          if AA ne 0
+              {' A',AA}
+          endif
+          if BB ne 0
+              {' B',BB}
+          endif
+          if CC ne 0
+              {' C',CC}
+          endif
+endp
+@change_wire
+endp
+
+@turning
+endp
+
+@feed_spin
+endp
+
+@turn_proc
+endp
+
+@turn_endproc
+endp
+
+@end_job_procs
+endp
+
+@turn_drill
+endp
+
+@thread
+endp
+
+@groove
+endp
+
+@turn_opt_parms
+endp
+
+@change_tool
+endp
+
+@arc
+endp
+
+@m_feed_spin
+endp
+
+@line_4x
+endp
+
+@move_4x
+endp
+
+@turn_change_tool
+endp
+
+@drill4x_pnt
+endp
+
+@rotary_info
+endp
+
+@init_cpos
+endp
+
+@move4x_dir
+endp
+
+@line4x_dir
+endp
+
+@move4x_polar
+endp
+
+@line4x_polar
+endp
+
+@arc4x_polar
+endp
+
+@move4x_cartesian
+endp
+
+@line4x_cartesian
+endp
+
+@arc4x_cartesian
+endp
+
+@drill4x_polar
+endp
+
+@drill4x_cartesian
+endp
+@wc_g49_arc
+    {nb,'G49'}
+    skipline=false
+endp
+
+
+
+
+
+
+@wc_program_plane
+       local string msg1
+
+;      msg1 = "PROGRAMIERTE EBENE " + tostr(program_plane)
+;      message = msg1
+;      call @message
+      if job_type eq '4_X' or job_type eq 'drill' then
+           {nb,'( UPPER_GUIDE = 'upper_guide ' ZERO_PLANE = 'zero_plane ')' }
+           {nb,'( UPPER_PLANE = 'upper_plane ' SUB PLANE = ' (upper_plane - program_plane)')'}
+      endif
+endp
+@wc_finish_info
+      enum = tonum(e_group_name)
+      if change(enum)
+          {nb,'C'enum:'3/6.0(p)'}
+      endif
+endp
+
+
+
+
+
+
+
+

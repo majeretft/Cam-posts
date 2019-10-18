@@ -1,0 +1,101 @@
+@pre_processor
+    ;Internal parms
+    machine_type              = WIRE_CUT
+    post_processor            = Chmer
+
+    ;Machine Initialize
+    abs_coord                 = N
+    iMachine_DB_name          = 
+
+    ;Program numbers
+    prog_num_min              = 1
+    prog_num_max              = 8999
+    prog_num_dflt             = 5000
+    proc_num_min              = 1
+    proc_num_max              = 8999
+    proc_num_dflt             = 5001
+
+    ;Procedures control
+    gen_procs                 = Y
+    drill_proc                = Y
+    gen_internal_proc         = Y
+
+    ;Home
+
+    ;Positioning
+
+    ;Compensation
+    comp_exist                = Y N
+    comp_x_start              = N
+
+    ;Line definitions
+
+    ;Arc definitions
+    arc_exist                 = Y Y
+    arc_3d                    = Y
+    arc_quadrants             = N
+    arc_gt_180                = Y
+    arc_max_chord             = 30.0000, 1.1811
+    arc_max_angle             = 10.0000
+    arc_max_radius            = 2000.0000, 78.7402
+    arc_min_radius            = 0.0020, 0.0002
+    arc_5x                    = N
+
+    ;Epsilon values
+    eps_angle                 = 0.0020
+    zero_value                = 0.0010, 0.0000
+    min_delt_arc_rad          = 0.0100, 0.0004
+    safety_dist               = 2.0000, 0.0787
+
+    ;Feed-Spin
+    rapid_feed                = 5000.0000, 196.8504
+
+    ;Timing
+    time_factor               = 1.0000
+    block_time                = 0.0000
+
+    ;Coolant_options
+
+    ;Part options
+
+    ;Job options
+    job_opt_type              = G43 NUMERIC
+    job_opt_type              = Constant NUMERIC
+
+    ;Drill cycles
+
+    ;Turning cycles
+
+    ;Threading cycles
+
+    ;Grooving cycles
+
+    ;Wire Cut cycles
+    wc_macro                  = P8000 None Y  XX YY EE DD RR AA BB CC
+    wc_macro                  = P8001 None Y  XX YY EE DD RR AA BB CC
+    wc_macro                  = P8002 None Y  XX YY EE DD RR AA BB CC
+    wc_macro                  = P8003 None Y  XX YY EE DD RR AA BB CC
+    wc_macro                  = P8004 None Y  XX YY EE DD RR AA BB CC
+    wc_macro                  = P8005 None Y  XX YY EE DD RR AA BB CC
+    wc_macro                  = P8006 None Y  XX YY EE DD RR AA BB CC
+    wc_macro                  = P8007 None Y  XX YY EE DD RR AA BB CC
+    wc_macro                  = P8008 None Y  XX YY EE DD RR AA BB CC
+    wc_macro                  = P8009 None Y  XX YY EE DD RR AA BB CC
+    wc_macro                  = P8010 None Y  XX YY EE DD RR AA BB CC
+    wc_macro                  = P8011 None Y  XX YY EE DD RR AA BB CC
+
+    ;Turning definitions
+
+    ;Fourth axis
+
+    ;Sim Five axis
+
+    ;Wire Cut parameters
+    lower_guide_level         = -13.0000, 0.0000
+    offset_group_name         = SODICK
+    u_max                     = 15.0000, 1.0000
+    v_max                     = 15.0000, 1.0000
+    xy_abs                    = Y
+    uv_abs                    = Y
+    agie                      = N
+endp

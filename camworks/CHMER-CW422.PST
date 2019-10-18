@@ -1,0 +1,864 @@
+Customization file for CHMER CW422
+
+Post variables listed in PostVariables.pst
+
+*DO NOT CHANGE the POST VERSION - THIS IS ONLY DONE WHEN SOURCE CODE CHANGES ARE MADE BY DEVELOPER!!!!!!!!!!
+1000. Version Information = Version Month Day Year? "0.1 03 27 2017"
+
+
+0. File Header
+";O",prog_n
+";(MACHINE: ", machine_make, "-", machine_model, ")"
+";(CREATED: ", output_date, " ", output_time, ")"
+metric_mode_no_code
+user_comment_1
+user_comment_2
+user_comment_3
+user_comment_4
+user_comment_5
+user_comment_6
+user_comment_7
+user_comment_8
+user_comment_9
+user_comment_10
+user_comment_11
+user_comment_12
+user_comment_13
+user_comment_14
+user_comment_15
+user_comment_16
+
+1. Start of file programmed zero
+absolute_coord
+zero_set,xr,yr
+
+2. Start of file Standard
+absolute_coord
+zero_set,xr,yr
+
+3. Tool change
+
+4. Null tool change
+
+5. End of file
+end_of_file
+
+6. Optional Stop
+optional_stop
+
+7. Sub program call
+
+8. Sub definition
+
+9. Sub program return
+
+10. Memorize re-thread point.
+
+12. Auto wire cut
+
+13. Auto wire threading
+
+14. Submerged machining
+
+15. High pressure pump On
+
+16. High pressure pump OFF.
+
+17. File trailer.
+
+18. Format for taper variable definition.
+
+19. Format for offset variable definition.
+
+20. Format for taper when using taper registers.
+
+21. Format for offset when using offset registers.
+
+22. Set debug.
+debug_off
+
+23. Format for start hole rapid move.
+
+24. Format for end of first cut.
+
+25. Format for ctc variable definition.
+
+26. Format for ctc.
+
+27. Position Move no wire threader, no programable Z.
+
+28. Position Move with wire threader, no programable Z.
+
+29. Position Move with no wire threader, with programmable Z.
+
+30. Position Move with wire threader, with programmable Z.
+
+31. Start of Rough Pass.
+
+32. Start of Skim One.
+
+33. Start of Skim Two.
+
+34. Start of Skim Three.
+
+35. Start of 2axis contour - Parallel leadin - No Subprogram
+1035. Start of 2axis contour - Parallel leadin - In Subprogram
+system_comment
+feature_name_comment
+feature_name_comment
+n,cutting_cond,feed_rate
+n,"M80"
+n,"M82"
+n,"M84"
+n,absolute_coord
+force_x,force_y
+n,zero_set,xr,yr
+n,cc,feed_move,decimal_point_on,trailing_zeros_off,taper_angle,trailing_zeros_on,decimal_point_off,x_f,y_f,wire_offset,"M90"
+skip_next_move
+
+36. Start of 2axis contour - Parallel leadin - First cut - No Subprogram
+
+37. Start of 2axis contour line/arc approach
+
+38. Start of 2axis contour - Line Arc leadin - First cut - No Subprogram
+
+39. Start of 2axis contour - Line leadin - first cut - No Subprogram
+
+40. Start of 2axis contour.
+
+41. Start of 2axis contour on glue stop.
+
+97. Start of 2axis contour on coreless cut.
+
+42. Line move of perpendicular approach on 2Axis contour.
+feed_move, taper_angle, x_f, y_f  
+
+43. Line move of perpendicular approach on 2Axis contour on glue stop.
+1043. Line move of perpendicular approach on 2Axis contour on skimmed glue stop.
+n,cutting_cond,feed_rate
+force_x,force_y,force_z
+n,feed_move,cc,decimal_point_on,trailing_zeros_off,taper_angle,trailing_zeros_on,decimal_point_off,x_f,y_f,wire_offset,"M90"
+
+44. Line move of parallel approach on 2Axis contour.
+feed_move, taper_angle, x_f, y_f
+
+45. Line move of parallel approach on 2Axis contour on glue stop.
+feed_move, taper_angle, x_f, y_f
+
+46. Line move of line/arc approach on 2Axis contour.
+feed_move, taper_angle, x_f, y_f
+
+47. Line move of line/arc approach on 2Axis contour on glue stop.
+feed_move, taper_angle, x_f, y_f
+48. Line move if first entity of finished shape is line on 2axis contour with linear approach.
+feed_move, taper_angle, x_f, y_f
+
+11. Line move if first entity of finished shape is line on 2axis contour with first cut short linear approach.
+1011. Line move if first entity of finished shape is line on 2axis contour with first cut with linear approach on glue stop.
+n,feed_move,decimal_point_on,trailing_zeros_off,taper_angle,trailing_zeros_on,decimal_point_off,cc,x_f,y_f
+
+49. Line move if first entity of finished shape is line on 2axis contour with linear approach on glue stop.
+feed_move, taper_angle, x_f, y_f
+50. Line move if first entity of finished shape is line on 2axis contour with line/arc approach.
+feed_move, taper_angle, x_f, y_f
+51. Line move if first entity of finished shape is line on 2axis contour with line/arc approach on glue stop.
+feed_move, taper_angle, x_f, y_f
+52. Line move in a 2axis contour.
+feed_move, taper_angle, x_f, y_f
+
+53. Line move if last entity of finished shape is line on 2axis contour with linear release.
+feed_move, taper_angle, x_f, y_f
+ 
+77. Line move if last entity of finished shape is line on 2axis contour with linear release on glue stop.
+feed_move, taper_angle, x_f, y_f
+54. Line move if last entity of finished shape is line on 2axis contour with line/arc release.
+feed_move, taper_angle, x_f, y_f
+78. Line move if last entity of finished shape is line on 2axis contour with line/arc release on glue stop.
+feed_move, taper_angle, x_f, y_f
+55. Line move of perpendicular release on 2Axis contour.
+feed_move, cancel_offset, "H000", cancel_taper, taper_zero, x_f, y_f
+56. Line move of parallel release on 2Axis contour.
+feed_move, cancel_offset, "H000", cancel_taper, taper_zero, x_f, y_f
+
+57. Line move of line/arc release on 2Axis contour.
+feed_move, cancel_offset, "H000", cancel_taper, taper_zero, x_f, y_f
+
+73. Line move of line Release on 2Axis contour on glue stop.
+feed_move, cancel_offset, "H000", cancel_taper, taper_zero, x_f, y_f
+
+74. Line move of line/arc release on 2Axis contour on glue stop.
+feed_move, cancel_offset, "H000", cancel_taper, taper_zero, x_f, y_f
+
+98. Last line move of coreless cut.
+feed_move, taper_angle, x_f, y_f
+58. Arc move of line/arc approach on 2Axis contour.
+g_arc_move, x_f, y_f, arc_center, taper_angle
+59. Arc move of line/arc approach on 2Axis contour on glue stop.
+g_arc_move, x_f, y_f, arc_center, taper_angle
+60. Arc move if first entity of finished shape is an arc on 2axis contour with linear approach.
+g_arc_move, x_f, y_f, arc_center, taper_angle
+61. Arc move if first entity of finished shape is an arc on 2axis contour with linear approach on glue stop.
+g_arc_move, x_f, y_f, arc_center, taper_angle
+62. Arc move if first entity of finished shape is an arc on 2axis contour with line/arc approach.
+g_arc_move, x_f, y_f, arc_center, taper_angle
+63. Arc move if first entity of finished shape is an arc on 2axis contour with line/arc approach on glue stop.
+g_arc_move, x_f, y_f, arc_center, taper_angle
+64. Arc move.
+g_arc_move, x_f, y_f, arc_center, taper_angle
+65. Arc move if last entity of finished shape is an arc on 2axis contour with linear release.
+g_arc_move, x_f, y_f, arc_center, taper_angle
+
+66. Arc move if last entity of finished shape is an arc on 2axis contour with linear approach on glue stop.
+g_arc_move, x_f, y_f, arc_center, taper_angle
+67. Arc move if last entity of finished shape is an arc on 2axis contour with line/arc release.
+g_arc_move, x_f, y_f, arc_center, taper_angle
+68. Arc move if last entity of finished shape is an arc on 2axis contour with line/arc release on glue stop.
+g_arc_move, x_f, y_f, arc_center, taper_angle
+69. Arc move of line/arc release on 2Axis contour.
+g_arc_move, x_f, y_f, arc_center, taper_angle
+
+70. Arc move of line/arc release on 2Axis contour on glue stop.
+g_arc_move, x_f, y_f, arc_center, taper_angle
+
+
+71. End of 2axis cutting.
+
+72. End of 2axis cutting on glue stop.
+1072. End of 2axis cutting on skimmed glue stop.
+
+75. Output File Break.
+
+76. Output return to thread point if not there already.
+
+92. Start of 4axis contour - Right angle leadin - first cut - In Subprogram.
+
+93. Start of 4axis contour - Right angle leadin - first cut - No Subprogram.
+
+80. Start of 4axis contour - line-linearc Leadin - no first cut - In Subprogram.
+
+81. Start of 4axis contour - line-linearc Leadin - no first cut - No Subprogram.
+
+82. 4axis contour - wire comp on - first line move - right angle leadin.
+
+83. 4axis contour line bottom line top move.
+
+84. 4axis contour line bottom arc top move.
+
+85. 4axis contour arc bottom line top move.
+
+86. 4axis contour arc bottom arc top move.
+
+87. Wire comp off 4axis first (always on line line).
+
+94. Contour 4axis - LineMoves - First lead line - First cut
+
+88. Wire comp off 4axis second (always on line line).
+
+89. End of 4axis contour subprogram.
+
+90. End of 4axis contour no subprogram.
+
+95. End of 4axis cutting.
+
+96. End of 4axis cutting on glue stop.
+
+91. 4axis contour line bottom line top second to last move.
+
+100. Start of 4axis xyuv subprogram.
+
+101. Start of 4axis xyuv no subprogram.
+system_comment
+feature_name_comment
+
+102. Line move of perpendicular approach on 4axis xyuv contour.
+cc, "D1"
+feed_move, x_f, y_f, u_f_incremental, v_f_incremental
+
+103. Line move of parallel approach on 4axis xyuv contour.
+cc, "D1"
+feed_move, x_f, y_f, u_f_incremental, v_f_incremental
+
+104. Line move of line/arc approach on 4axis xyuv contour.
+cc, "D1"
+feed_move, x_f, y_f, u_f_incremental, v_f_incremental
+
+109. Line move first entity of finished shape on xyuv contour with linear approach.
+feed_move, x_f, y_f, u_f_incremental, v_f_incremental
+
+105. 4axis xyuv line move.
+feed_move, x_f, y_f, u_f_incremental, v_f_incremental
+
+106. Line move of perpendicular release on 4axis xyuv contour.
+feed_move, x_f, y_f, u_f_incremental, v_f_incremental
+cancel_offset
+
+110. Line move last entity of finished shape on xyuv contour with linear release.
+feed_move, x_f, y_f, u_f_incremental, v_f_incremental
+
+107. Line move of parallel release on 4axis xyuv contour.
+feed_move, x_f, y_f, u_f_incremental, v_f_incremental
+cancel_offset
+
+108. Line move of line/arc release on 4axis xyuv contour.
+feed_move, x_f, y_f, u_f_incremental, v_f_incremental
+cancel_offset
+
+111. End of xyuv contour subprogram.
+
+112. End of xyuv contour no subprogram.
+
+113. Arc on bottom Arc on top in XYUV cutting for Ona machines.
+
+120. Command program work piece start.
+
+121. Quality one with selected quality name.
+
+122. Quality two with selected quality name.
+
+123. Quality one with user defined quality parameters.
+
+124. Quality two with user defined quality parameters.
+
+125. Quality one coreless with selected quality name.
+
+126. Quality one coreless with user defined quality parameters.
+
+127. Quality one land and taper with selected quality name.
+
+128. Quality one land and taper with user defined quality parameters.
+
+155. Quality two land and taper with selected quality name.
+
+156. Quality two land and taper with user defined quality parameters.
+
+129. Command program work piece end.
+
+130. Command program feature start 2Axis (CLOSED).
+
+131. Command program feature start 2Axis (OPEN).
+
+132. Command program feature start 4Axis (CLOSED).
+
+133. Command program feature start 4Axis (OPEN).
+
+134. Command program feature start Coreless Pocket.
+
+136. Command program subroutine define format line.
+
+137. Command program subroutine call format line.
+
+139. Command program feature end 2Axis.
+
+140. Command program feature end 4Axis.
+	
+141. Command program feature end Coreless pocket.
+
+142. Command program feature end Coreless skims.
+
+143. Command program feature start 2Axis (CLOSED - Land and Taper - Land on Top).
+
+149. Command program feature start 2Axis (CLOSED - Land and Taper - Land on Bottom).
+
+144. Command program feature start 2Axis (OPEN COLLAR - Land and Taper).
+
+145. Command program Taper format for 2Axis feature with taper, no land.
+
+146. Command program Leadout move.
+
+147. Command program Die Clearance.
+
+148. Command program taper z for 2Axis feature with taper, no land.
+
+150. Settup Sheet Workpiece Description.
+
+160. Settup Sheet Feature Description.
+
+170. Output line format for .SBR file.
+
+190. End of file for auto holes.**** Hole drilling blocks ****
+
+191. Sub program call for auto holes.
+
+192. Sub definition for auto holes.
+
+193. Sub program return for auto holes.
+
+194. Drill long form.
+
+199. File trailer for auto holes.
+
+
+
+200. Is X modal? y
+201. Is Y modal? y
+202. Is Z modal? y
+203. Are the g codes modal? y
+204. Are the g codes (G02 and G03) modal in arc moves? y
+205. Are the xy (or yz or xz) coordinates modal in arc moves? y
+207. Output sequence numbers in subprograms ? n
+208. Output sequence numbers? n
+209. Number of places for sequence numbers? 4
+210. Delete the decimal point? n
+211. Delete leading zeros? n
+212. Delete trailing zeros? y
+213. English or Metric format (E/M)? M
+214. Places before decimal point for reals (X, Y, Z)? 1
+215. Number of places for G and M codes? 2
+216. Places after decimal for feedrate ? 3
+217. Scale factor for feedrate ? 1
+219. Add spaces to the program? y
+220. Add spaces to script file? n
+221. Break arcs into quadrants? n
+222. Arc center a=absolute, b=incremental, d=unsigned inc., e=radius? a
+223. Break arcs into two pieces if greater than 180 degrees? y
+225. Iso Radius Arc center a=absolute, b=incremental, d=unsigned inc., e=radius? a
+262. Add sign to all coordinate values? n
+270. Build taper and offset registers (must be yes if #528 or #524 is y) ? y
+271. Add sequence number to taper and offset register output ? y
+272. Places after decimal for offset ? 5
+273. Scale factor for offset ? 1
+274. Delete decimal for feedrate ? n
+275. Delete decimal for offset ? n
+
+311. Maximum xyuv difference? 0.75000
+312. Z component that wire extends beyond part (0.25 + 0.25)? 0.50000
+313. Z clearance for auto Z programming for XY move? 0.20000
+314. Z clearance for auto Z programming for cutting? 0.00000
+315. Minimum part heigth? 0.00000
+316. When using variable "stop_distance_before_end_of_glue_stop" distance from end of glue stop im mm ? 0.00000
+
+414. Number of decimal places for metric numbers ? 4
+415. Number of decimal places for english numbers? 5
+416. G code that is used to specify rapid move? 0
+417. G code that is used to specify feed move? 1
+418. Offset format (0=prfx + Pass#),(1=prfx+pass#=DataBaseOffset),(2=619=D1 value),(3=619 value=DataBaseOffset),(4=619 value DataBaseOffset)? 0
+419. Cutting Conditions format (0 = S + Pass #), (1 = S + Pass # + value 320), (2 = S+DataBase Value)? 2
+420. Value to add to Cutting Conditions S + Pass# ? 0
+421. Value to add to Taper H + Pass# ? 100
+422. Value to add to Taper D + Pass#? 0
+423. G code that is used to specify arc cw? 2
+424. G code that is used to specify arc ccw? 3
+425. Number of decimal places for Angles? 3
+426. Places before decimal point for Angles? 3
+427. Number of places for cutting conditions register codes? 4
+428. Number of places for offsets register codes? 2
+429. Value to add to Cutting Conditions register number? 0
+430. Number of places for Job file length? 8
+431. Number of places for Iso file length with Job/Iso file format (not including file number)? 4
+432. Number of places for Iso file number including leading zeros ? 2
+433. Maximum sequence number allowed (used when #539 is y)? 999
+
+511. Use incremental coordinates? n
+512. Use block delete for stop codes (M00)? n
+513. Output F feedrate values? n
+514. Output 'H' and 'E' values? y
+517. Output initial taper angle of zero? n
+518. Output M00 codes? y
+521. Enclose each line with quotes and add semicolon? n
+522. Output wire speed and tension? n
+523. Output programable Z heights? y
+524. Output taper as signed real number? n
+525. Use GCode for Taper side? y
+526. Start renumbering from start number for subprograms? n
+527. Create subdirectory for nc file? n
+528. Output taper angles? y
+529. Output offsets using Register variables? y
+530. Output taper angle using Register variables? n
+531. Replace spaces in comment with commas ? n
+532. Output taper angle as tangent(taper angle) ? n
+533. Output suprograms at the beginning of the program? n
+534. Use primary shape as work plane instead of bottom of part ? n
+535. Output all cuts in separate text file? n
+536. Output cutting conditions using register variables? n
+537. Allow spaces user defined spaces in program codes? n
+538. Add subfolder name to iso calls in script file? n
+539. Re-Start sequence numbering once max sequence number is reached? n
+540. Do not optimize and share subprograms for more that one cut? y
+
+605. Cutting condition prefix? "S"
+606. U coordinate prefix? "U"
+607. V coordinate prefix? "V"
+608. Angle prefix? "A"
+609. Wire offset prefix? "H"
+610. Miscellaneous end of file string? ""
+611. Wire speed prefix? ""
+612. Wire tension prefix? ""
+613. Pattern contour subprogram start code? " G958 G92 X0 Y0"
+614. Inch mode machining? ""
+615. Metric mode machining? ""
+616. Submerged machining code? ""
+617. Conic radius string? ""
+618. Iso radius string? ""
+619. Offset Register string where one register set with each value? ""
+620. Absolute coordinates? "G90"
+621. Incremental coordinates? "G91"
+622. Coordinate zero set? "G92"
+623. Rapid Move? "G00"
+624. Rethread memo point? ""
+625. End of file? "M02"
+626. Stop? "M00"
+627. Optional Stop? "M01"
+628. Subprogram call? ""
+629. Subprogram return? ""
+630. Comment Start? ""
+631. Comment End? ""
+632. High pressure pump on? ""
+633. High pressure pump off? ""
+634. Four axis start? ""
+635. Four axis end? ""
+636. Cut wire? ""
+637. Thread wire? ""
+638. On error code? ""
+639. Cancel wire offset? "G40"
+640. Cancel taper? "G50"
+641. Prefix for radius values? "R"
+642. Prefix for arc X center? "I"
+643. Prefix for arc Y center? "J"
+644. Cancel wire offset 4axis? ""
+645. Subprogram prefix? ""
+646. Machine maker?				"CHMER"
+647. Machine model?				"CW422"
+648. Part Height prefix? ""
+649. Reference Plane prefix? ""
+650. Wire comp left? "G41"
+651. Wire comp right? "G42"
+652. Wire comp left	4axis? ""
+653. Wire comp right? ""
+654. Extension for Geometry output? ""
+655. Extension for Script file? ""
+656. Block delete? ""
+657. Taper register Variable prefix? ""
+658. Subprogram call subnumber prefix? ""
+659. Add these characters to the end of each line? ""
+660. Extension for Script file? ""
+661. Four axis contour delimeter? ""
+662. Incremental upper plane prefix? ""
+663. GCode for Taper left? ""
+664. GCode for Taper right? ""
+
+Used in agievision 665 - 669
+665. String for group name prefix for AgieVision2 coreless? ""
+666. String for group name prefix for AgieVision2 collar cutting? ""
+667. String for collar open top work name? ""
+668. String for collar land work name? ""
+669. String for collar open bottom work name? ""
+
+670. GCode for Rapid Move? "G00"
+671. GCode for Feed Move? "G01"
+672. GCode for Arc CW? "G02"
+673. GCode for Arc CCW? "G03"
+674. Prefix for arc X center Upper Section? "I"
+675. Prefix for arc Y center Upper Section? "J"
+676. Prefix for X Move? "X"
+677. Prefix for Y Move? "Y"
+678. Prefix for Z Move? "Z"
+679. Path for Tech file for Agie 123 Job file? ""
+680. Path for Geo files for Agie 123 Job file? ""
+681. Add to file name to create sub directory for machining files? ""
+682. Name to use for Iso file base name ("" = first part of part file name)? ""
+683. Start of file string to be output once? ""
+684. GCode for Iso Radius Arc CW? "G02"
+685. GCode for Iso Radius Arc CCW? "G03"
+686. Two axis with taper start? ""
+687. Two axis with taper end? ""
+
+900. Work shift #0? "G54"
+901. Work shift #1? "G55"
+902. Work shift #2? "G56"
+903. Work shift #3? "G57"
+904. Work shift #4? "G58"
+905. Work shift #5? "G59"
+906. Work shift #6? "G154"
+907. Work shift #7? "G155"
+908. Work shift #8? "G156"
+909. Work shift #9? "G157"
+910. Work shift #10? "G158"
+911. Work shift #11? "G159"
+912. Work shift #12? "G254"
+913. Work shift #13? "G255"
+914. Work shift #14? "G256"
+915. Work shift #15? "G257"
+916. Work shift #16? "G258"
+917. Work shift #17? "G259"
+918. Work shift #18? "G354"
+919. Work shift #19? "G355"
+920. Work shift #20? "G356"
+921. Work shift #21? "G357"
+922. Work shift #22? "G358"
+923. Work shift #23? "G359"
+924. Work shift #24? "G454"
+925. Work shift #25? "G455"
+926. Work shift #26? "G456"
+927. Work shift #27? "G457"
+928. Work shift #28? "G458"
+929. Work shift #29? "G459"
+930. Work shift #30? "G554"
+931. Work shift #31? "G555"
+932. Work shift #32? "G556"
+933. Work shift #33? "G557"
+934. Work shift #34? "G558"
+935. Work shift #35? "G559"
+936. Work shift #36? "G654"
+937. Work shift #37? "G655"
+938. Work shift #38? "G656"
+939. Work shift #39? "G657"
+940. Work shift #40? "G658"
+941. Work shift #41? "G659"
+942. Work shift #42? "G754"
+943. Work shift #43? "G755"
+944. Work shift #44? "G756"
+945. Work shift #45? "G757"
+946. Work shift #46? "G758"
+947. Work shift #47? "G759"
+948. Work shift #48? "G654"
+949. Work shift #49? "G655"
+950. Work shift #50? "G656"
+951. Work shift #51? "G657"
+952. Work shift #52? "G658"
+953. Work shift #53? "G659"
+954. Work shift #54? "G754"
+955. Work shift #55? "G755"
+956. Work shift #56? "G756"
+957. Work shift #57? "G757"
+958. Work shift #58? "G758"
+959. Work shift #59? "G759"
+960. Work shift #60? ""
+961. Work shift #61? ""
+962. Work shift #62? ""
+963. Work shift #63? ""
+964. Work shift #64? ""
+965. Work shift #65? ""
+966. Work shift #66? ""
+967. Work shift #67? ""
+968. Work shift #68? ""
+969. Work shift #69? ""
+970. Work shift #70? ""
+971. Work shift #71? ""
+972. Work shift #72? ""
+973. Work shift #73? ""
+974. Work shift #74? ""
+975. Work shift #75? ""
+976. Work shift #76? ""
+977. Work shift #77? ""
+978. Work shift #78? ""
+979. Work shift #79? ""
+980. Work shift #80? ""
+981. Work shift #81? ""
+982. Work shift #82? ""
+983. Work shift #83? ""
+984. Work shift #84? ""
+985. Work shift #85? ""
+986. Work shift #86? ""
+987. Work shift #87? ""
+988. Work shift #88? ""
+989. Work shift #89? ""
+990. Work shift #90? ""
+991. Work shift #91? ""
+992. Work shift #92? ""
+993. Work shift #93? ""
+994. Work shift #94? ""
+995. Work shift #95? ""
+996. Work shift #96? ""
+997. Work shift #97? ""
+998. Work shift #98? ""
+999. Work shift #99? ""
+
+2001. Program Block #1 (program_block_1)
+
+2002. Program Block #2 (program_block_2)
+
+2003. Program Block #3 (program_block_3)
+
+2004. Program Block #4 (program_block_4)
+
+2005. Program Block #5 (program_block_5)
+
+2007. Program Block #7 (program_block_7)
+
+2008. Program Block #8 (program_block_8)
+
+2009. Program Block #9 (program_block_9)
+
+2010. Program Block #10 (program_block_10)
+
+2011. Program Block #11 (program_block_11)
+
+2012. Program Block #12 (program_block_12)
+
+2014. Program Block #14 (program_block_14)
+
+2015. Program Block #15 (program_block_15)
+
+2016. Program Block #16 (program_block_16)
+
+2017. Program Block #17 (program_block_17)
+
+2018. Program Block #18 (program_block_18)
+
+2019. Program Block #19 (program_block_19)
+
+2021. Program Block #21 (program_block_21)
+
+2022. Program Block #22 (program_block_22)
+
+2023. Program Block #23 (program_block_23)
+
+2024. Program Block #24 (program_block_24)
+
+2025. Program Block #25 (program_block_25)
+
+2026. Program Block #26 (program_block_26)
+
+2027. Program Block #27 (program_block_27)
+
+2028. Program Block #28 (program_block_28)
+
+2029. Program Block #29 (program_block_29)
+
+2030. Program Block #30 (program_block_30)
+
+2031. Program Block #31 (program_block_31)
+
+2032. Program Block #32 (program_block_32)
+
+2033. Program Block #33 (program_block_33)
+
+2034. Program Block #34 (program_block_34)
+
+2035. Program Block #35 (program_block_35)
+
+2036. Program Block #36 (program_block_36)
+
+2037. Program Block #37 (program_block_37)
+
+2038. Program Block #38 (program_block_38)
+
+2039. Program Block #39 (program_block_39)
+
+2040. Program Block #40 (program_block_40)
+
+2041. Program Block #41 (program_block_41)
+
+2042. Program Block #42 (program_block_42)
+
+2043. Program Block #43 (program_block_43)
+
+2044. Program Block #44 (program_block_44)
+
+2045. Program Block #45 (program_block_45)
+
+2046. Program Block #46 (program_block_46)
+
+2047. Program Block #47 (program_block_47)
+
+2048. Program Block #48 (program_block_48)
+
+2049. Program Block #49 (program_block_49)
+
+2050. Program Block #50 (program_block_50)
+
+2051. Program Block #51 (program_block_51)
+
+2052. Program Block #52 (program_block_52)
+
+2053. Program Block #53 (program_block_53)
+
+2054. Program Block #54 (program_block_54)
+
+2055. Program Block #55 (program_block_55)
+
+2056. Program Block #56 (program_block_56)
+
+2057. Program Block #57 (program_block_57)
+
+2058. Program Block #58 (program_block_58)
+
+2059. Program Block #59 (program_block_59)
+
+2060. Program Block #60 (program_block_60)
+
+2061. Program Block #61 (program_block_61)
+
+2062. Program Block #62 (program_block_62)
+
+2063. Program Block #63 (program_block_63)
+
+2064. Program Block #64 (program_block_64)
+
+2065. Program Block #65 (program_block_65)
+
+2066. Program Block #66 (program_block_66)
+
+2067. Program Block #67 (program_block_67)
+
+2068. Program Block #68 (program_block_68)
+
+2069. Program Block #69 (program_block_69)
+
+2070. Program Block #70 (program_block_70)
+
+2071. Program Block #71 (program_block_71)
+
+2072. Program Block #72 (program_block_72)
+
+2073. Program Block #73 (program_block_73)
+
+2074. Program Block #74 (program_block_74)
+
+2075. Program Block #75 (program_block_75)
+
+2076. Program Block #76 (program_block_76)
+
+2077. Program Block #77 (program_block_77)
+
+2078. Program Block #78 (program_block_78)
+
+2079. Program Block #79 (program_block_79)
+
+2080. Program Block #80 (program_block_80)
+
+2081. Program Block #81 (program_block_81)
+
+2082. Program Block #82 (program_block_82)
+
+2083. Program Block #83 (program_block_83)
+
+2084. Program Block #84 (program_block_84)
+
+2085. Program Block #85 (program_block_85)
+
+2086. Program Block #86 (program_block_86)
+
+2087. Program Block #87 (program_block_87)
+
+2088. Program Block #88 (program_block_88)
+
+2089. Program Block #89 (program_block_89)
+
+2090. Program Block #90 (program_block_90)
+
+2091. Program Block #91 (program_block_91)
+
+2092. Program Block #92 (program_block_92)
+
+2093. Program Block #93 (program_block_93)
+
+2094. Program Block #94 (program_block_94)
+
+2095. Program Block #95 (program_block_95)
+
+2096. Program Block #96 (program_block_96)
+
+2097. Program Block #97 (program_block_97)
+
+2098. Program Block #98 (program_block_98)
+
+2099. Program Block #99 (program_block_99)
+
+2100. Program Block #100 (program_block_100)
+
+2101. Program Block #101 "To get access to complete NC File" 
+
+2102. Program Block #102 "To get access to each line as it is posted"
+
+

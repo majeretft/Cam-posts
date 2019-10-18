@@ -1,0 +1,1562 @@
+; type         	       : XYZCB simultan and indexial, machine plane XY and ZX
+; Maschine   	       :E DMU 80P MonoBlock
+; control unit         : Heidenhain iTNC530
+; ------------------------------------------------------------------------------
+; specials             : Plane Spatial
+;                      : Plane Relativ
+;                      : Cycle 32 (tolerance) for 5X-, 3D- and HSM-jobs
+; ------------------------------------------------------------------------------
+; machine_options      : Dreiachs_Ausgabe (logical)   ; 3axis output
+;                      : mit_PRESET_Tabelle (logical) ; with preset_table
+;                      : Parameter_Vorschub (logical) ; Q Feed
+; ------------------------------------------------------------------------------
+; job_options          : KUEHLUNG_AUS (logical)    ; external cooling M8
+;                      : IKZ_EIN (logical)         ; internal cooling M7
+;                      : M0_STOPP (logical)        ; program stopp at end of job
+;                      : ZUSAETZL_M_CODE (integer) ; additional mcodes 
+;                      : M120_LA (integer)         ; look ahead function 		
+; ------------------------------------------------------------------------------
+; Rev 1.1 @start_of_job Yevgeni Mar 27/06/11
+@init_post
+
+    global string  m9 tool_diameter_f comp m_code inc_letter plane_letter spin_f strJobType r_file_name
+    global numeric save_feed save_spin save_tool_drill_lead X_value_M91 Y_value_M91 save_angle angle_rel 
+    global integer save_part_home_number trace_level prev_tool_number
+    global logical comp_used m_feed_flag first_rapid_move print_tmatrix rotary_flag fourth_axis_on
+    global logical fourth_axis_flag change_tool_flag M120_LA_flag change_ref_flag prev_X5_job
+
+    numeric_def_f   = '5.4/3(P)'
+    integer_def_f   = '5.0(PD)'
+    gcode_f         = '2/2.0(P)'
+    mcode_f         = '2/2.0(P)'
+    spin_f          = '5.0(P)'
+    xpos_f          = '+5.3/3(P)'
+    ypos_f          = '+5.3/3(P)'
+    zpos_f          = '+5.3/3(P)'
+    feed_f          = '4.0(P)'
+    tool_diameter_f = '5.3(P)'
+    blknum_f        = '4.0(DP)'
+    num_user_procs  =  1
+    line_labels     = TRUE    
+    blknum_gen      = TRUE
+    blknum_exist    = TRUE
+    BLKNUM_LETTER   = ''
+    blknum          = 2
+    blknum_delta    = 2
+    blknum_max      = 99999999
+ 
+    X_value_M91     = 0         ; X-value for retreat at program end concerning the maching coordinate system (M91)
+    Y_value_M91     = 0         ; Y-value for retreat at program end concerning the maching coordinate system (M91)
+    
+     ;Input "Trace level : 0-None ; 5-All", trace_level
+  ;trace "all":trace_level
+; trace "all ":5
+
+endp
+
+;-------------------
+
+@start_of_file
+   prev_tool_number = 0
+   {'0 BEGIN PGM ',r_file_name, ' MM'}
+   call @udr_blk_form
+   call @udr_head
+
+endp
+
+;-------------------
+
+@start_program
+
+   {nb,'* TOOLS/JOBS:'}
+   save_part_home_number = 0
+   prev_X5_job = false
+    
+endp
+
+;-------------------
+
+@end_program
+    {nb,'* END OF PROGRAM:'}
+    {nb,'L M09'}
+    {nb,'L M05'}
+    {nb, 'CYCL DEF 19.0 WORKING PLANE'}
+    {nb, 'CYCL DEF 19.1 A+0 B+0 C+0'}
+    {nb, 'CYCL DEF 19.0 WORKING PLANE'}
+    {nb, 'CYCL DEF 19.1'}
+    {nb,'TOOL CALL 'next_tool_number' ',plane_letter}
+   {nb, 'M140 MB MAX'}
+     {nb, 'L Z0 R0 F MAX M91'}
+     {nb, 'L Y0 R0 F MAX M91'}
+     {nb, 'L X0 R0 F MAX M91'}
+     {nb,'PLANE RESET STAY'}
+     {nb,'L C+0 B+0 R0 F MAX M94 C M126'}
+     {nb,'L M30'}
+
+   if Dreiachs_Ausgabe eq false
+      call @udr_reset_of_4th5th_axis
+   endif
+
+   {nb,'* OUTLINES/DRILLING POSITIONS:'}
+
+endp
+
+;-------------------
+
+@end_of_file
+
+   {nb 'END OF PROGRAM',r_file_name, ' MM'}
+   
+endp
+
+;-------------------
+
+@relative_mode
+   
+   inc_letter = 'I'
+   
+endp
+
+;-------------------
+
+@absolute_mode
+   
+   inc_letter = ' '
+   
+endp
+
+;-------------------
+
+@machine_plane
+
+   if machine_plane eq XY
+      plane_letter='Z'
+   else
+      if machine_plane eq ZX
+         plane_letter='Y'
+      else
+         local string Note
+         Note = 'Wrong level of work selected!'
+         print Note
+         {nb,'M0 ;',Note}
+      endif
+   endif
+	
+endp
+
+;-------------------
+
+@job_plane
+endp
+
+;-------------------
+
+@call_proc
+
+   {nb,'CALL LBL ',label '    REP '}
+   if proc_count gt 1 then
+      {,proc_count,'/',PROC_COUNT}
+   else
+      {''}
+   endif
+      
+endp
+
+;-------------------
+
+@proc
+    
+   {nb,'*   - 'upper(job_name)}
+   {nb,'LBL 'label,' '}
+    
+endp
+
+;-------------------
+
+@end_proc
+
+   {nb,'LBL 0'}
+   
+endp
+
+;-------------------
+
+@loop_matrix_info
+endp
+
+;-------------------
+
+@loop
+   
+   {nb,'LBL ',label}
+   
+endp
+
+;-------------------
+
+@end_loop
+
+   loop_count=loop_count-1
+   {nb,'CALL LBL 'label,' REP ',loop_count,'/',loop_count}
+     
+endp
+
+;-------------------
+
+@def_tool
+
+   {nb, '; T'tool_number, ' '}
+   if tool_message eq ''
+      {upper(tool_user_type), ' D' (tool_offset*2)}
+      if corner_radius ne 0
+         {' R'corner_radius}
+      endif 
+   else
+      {upper(tool_message)}
+   endif
+    
+endp
+
+;-------------------
+
+@rapid_move
+
+   if machine_plane eq ZX
+      call @invert_xpos 
+   endif
+   
+
+   if first_rapid_move eq true
+	  if inc_letter ne 'I'
+	          {nb 'L'[' X'xpos],[' Y'ypos]' 'comp,' FMAX'}
+                          {nb 'L'[' X'xpos],[' Y'ypos],[' Z'zpos]' ' comp,' FMAX'}
+	            else
+	         {nb 'L'[' IX'xpos],[' IY'ypos]' ' comp,' FMAX' }
+                         {nb 'L'[' IX'xpos],[' IY'ypos],[' IZ'zpos]' ' comp,' FMAX' }
+	  endif
+    else  
+	 if inc_letter ne 'I'
+	          {nb 'L'[' X'xpos],[' Y'ypos],[' Z'zpos]' ' comp,' FMAX'}
+	            else
+	         {nb 'L'[' IX'xpos],[' IY'ypos],[' IZ'zpos]' ' comp,' FMAX' }
+	 endif
+    endif
+
+   first_rapid_move = false
+
+   if machine_plane eq ZX
+      call @invert_xpos 
+   endif
+      
+endp
+
+;-------------------
+
+@line
+
+   if machine_plane eq ZX
+      call @invert_xpos
+   endif
+
+   if inc_letter ne 'I'
+      {nb,'L'[' X'xpos],[' Y'ypos],[' Z'zpos]}
+   else
+      {nb,'L'[' IX'xpos],[' IY'ypos],[' IZ'zpos]}
+   endif
+   
+   if comp_used
+      {' ' comp}
+      if M120_LA ne 0
+         M120_LA_flag = true
+      endif
+   endif
+   comp_used = false
+   
+   call @udr_print_feed
+    
+   if M120_LA_flag eq true and comp ne 'R0'
+      {' M120 LA' M120_LA} 
+      M120_LA_flag = false
+   endif
+
+   if machine_plane eq ZX
+      call @invert_xpos
+   endif
+
+endp
+
+;-------------------
+
+@arc
+
+   if machine_plane eq ZX
+      call @invert_xpos
+      xcenter = xcenter * -1
+      xcenter_rel = xcenter_rel * -1
+   endif 
+
+   if machine_plane eq XY
+      if inc_letter ne 'I'
+         {nb,'CC X'xcenter:xpos_f,' Y'ycenter:xpos_f}
+      else
+         {nb,'CC IX'xcenter_rel:xpos_f,' IY'ycenter_rel:xpos_f}   
+      endif
+
+      if change(zpos) eq false
+         if inc_letter ne 'I'
+            {nb,'C X'xpos' Y'ypos}
+         else
+            {nb,'C IX'xpos' IY'ypos}         
+         endif
+      else
+         if arc_direction eq CW
+            arc_size = arc_size * -1
+         endif
+         if inc_letter ne 'I'
+            {nb,'CP IPA'arc_size:xpos_f,' IZ'(zpos-zstart):xpos_f}
+         else
+            {nb,'CP IPA'arc_size:xpos_f,' IZ'(zpos):xpos_f}      
+         endif
+      endif
+   endif
+   
+   if machine_plane eq ZX
+      if inc_letter ne 'I'
+         {nb,'CC X'xcenter:xpos_f,' Z'ycenter:xpos_f}
+      else
+         {nb,'CC IX'xcenter_rel:xpos_f,' IZ'ycenter_rel:xpos_f}   
+      endif
+
+      if change(zpos) eq false
+         if inc_letter ne 'I'
+            {nb,'C X'xpos' Z'zpos}
+         else
+            {nb,'C IX'xpos' IZ'zpos}         
+         endif
+      else
+         if arc_direction eq CW
+            arc_size = arc_size * -1
+         endif
+         if inc_letter ne 'I'
+            {nb,'CP IPA'arc_size:xpos_f,' IY'(ypos-zstart):xpos_f}
+         else
+            {nb,'CP IPA'arc_size:xpos_f,' IY'(ypos):xpos_f}      
+         endif
+      endif
+   endif
+   
+   if arc_direction eq CW
+      {' DR-'}
+   else
+      {' DR+'}
+   endif
+   if comp_used
+      {' 'comp}
+   endif
+   comp_used = false
+   
+   call @udr_print_feed
+   
+   if machine_plane eq ZX
+      call @invert_xpos
+      xcenter = xcenter * -1
+   endif 
+
+endp
+
+;-------------------
+
+@compensation
+
+   if side eq COMP_LEFT
+      comp = 'RL'
+   endif
+   if side eq COMP_RIGHT
+      comp = 'RR'
+   endif
+   if side eq COMP_OFF
+      comp = 'R0'
+   endif
+   comp_used = true
+    
+endp
+
+;-------------------
+
+@delay
+endp
+
+;-------------------
+
+@change_ref_point
+
+   {nb,'CYCL DEF 7.0 DATUM SHIFT'}
+   {nb,'CYCL DEF 7.1 IX',XHOME}
+   {nb,'CYCL DEF 7.2 IY',YHOME}
+   {nb,'CYCL DEF 7.3 IZ',ZHOME}
+
+   if ref_point_init eq false
+      change_ref_flag = true
+   else   
+      change_ref_flag = false
+   endif
+    
+endp
+
+;-------------------
+
+@home_number
+
+  ; if mit_PRESET_Tabelle eq true
+      {nb,'CYCL DEF 247 DATUM SETTING ~'}
+      {nb,'Q339=+'home_number'    ;DATUM NUMBER'}
+  ; endif
+   
+endp
+
+;-------------------
+
+@rotate
+
+   if rotate_cancel
+      {nb,'CYCL DEF 10.0 ROTATION'}
+      {nb,'CYCL DEF 10.1 ROT 0.000'}
+   else
+      {nb,'CYCL DEF 10.0 ROTATION '}
+      {nb,'CYCL DEF 10.1 IROT ',angle:xpos_f}
+   endif
+    
+endp
+
+;-------------------
+
+@fourth_axis
+   
+   apos = cpos 
+   call @udr_apos_calculation 
+   if position eq 1     
+      {nb,'L Z'tool_start_plane:zpos_f' R0 FMAX'}
+      {nb,'L C'apos:xpos_f' FMAX M126'}   
+   else
+      angle_rel = angle - save_angle
+      call @udr_plane_relative
+   endif   
+   cpos = 0  
+   save_angle = angle 
+   fourth_axis_on = true
+   
+endp
+
+;-------------------
+
+@change_tool
+
+                  {nb 'M9'}
+                  {nb,'* T' tool_number ' '  tool_user_type}
+                 
+                  {nb,'M129'}
+                  {nb, 'L Z0 R0 F MAX M91'}
+                  {nb, 'L X-1 Y-1 R0 F MAX M91'}
+                  {nb,'PLANE RESET STAY'}
+                  {nb,'TOOL CALL 'tool_number' ',plane_letter}
+                  {'  S'spin:'4.0(p)'}
+                  {nb,'TOOL DEF 'next_tool_number}
+                  call @home_number
+                  if tool_direction eq CW then
+                     m9 = '3'
+                   else              ;  CCW
+                     m9 = '4'
+                   endif
+                   {nb 'L' ' M'm9' M8'}
+
+                      {nb, 'M140 MB MAX'}
+                      {nb, 'L Z0 R0 F MAX M91'}
+                      {nb, 'L Y0 R0 F MAX M91'}
+                      {nb, 'L X0 R0 F MAX M91'}
+                   ;   {nb,'PLANE RESET STAY'}
+
+                   print_tmatrix = true
+
+endp
+
+;-------------------
+
+@message
+endp
+
+;-------------------
+
+@drill
+
+   if rotary_flag eq true
+      call @move_4x
+   else
+      call @rapid_move
+   endif
+
+ ;;;yaron  depth = (drill_depth-safety)
+   
+ ;;;yaron  if down_step eq 0
+ ;;;yaron  down_step = depth
+ ;;;yaron  endif
+ 
+  
+   call @rapid_move
+ 
+      if drill_type eq Drilling
+        {nb'CYCL DEF 200 DRILLING ~'}
+        {nl'   Q200='safety,' ;SET-UP CLEARANCE. ~'}
+        {nl'   Q201=-',(drill_depth-safety),' ;DEPTH ~'}
+        {nl'   Q206='feed,';FEED RATE ~'}
+        {nl'   Q202=' depth,' ;Down Step ~'}
+        {nl'   Q210='Q210_Dwell_Time_Top,';DWELL TIME AT TOP ~'}
+        {nl'   Q203='(drill_lower_z +depth):zpos_f,' ;SURFACE COORDINATE  ~'}
+        {nl'   Q204='(abs((drill_lower_z +depth)-drill_clearance_z)):zpos_f,' ;2ND SET-UP CLEARANCE ~'}
+        {nl'   Q211='Q211_Dwell_Time_Depth,' ;DWELL TIME AT DEPTH '}
+
+      endif
+
+      if drill_type eq F_Drill 
+        {nb'CYCL DEF 200 DRILLING ~'}
+        {nl'   Q200='safety,' ;SET-UP CLEARANCE. ~'}
+        {nl'   Q201=-',(drill_depth-safety),' ;DEPTH ~'}
+        {nl'   Q206='feed,';FEED RATE ~'}
+        {nl'   Q202=' depth,' ;Down Step ~'}
+        {nl'   Q210='Q210_Dwell_Time_Top,';DWELL TIME AT TOP ~'}
+        {nl'   Q203='(drill_lower_z +depth):zpos_f,' ;SURFACE COORDINATE  ~'}
+        {nl'   Q204='(abs((drill_lower_z +depth)-drill_clearance_z)):zpos_f,' ;2ND SET-UP CLEARANCE ~'}
+        {nl'   Q211='Q211_Dwell_Time_Depth,' ;DWELL TIME AT DEPTH '}
+      endif
+
+
+      if drill_type eq Peck
+        {nb'CYCL DEF 203 UNIVERSAL DRILLING ~'}
+        {nl'   Q200='safety,' ;Safety. ~'}
+        {nl'   Q201=-',depth,' ;DEPTH. ~'}
+        {nl'   Q206='feed,' ;FEED RATE ~'}
+        {nl'   Q202='down_step,' ;Down Step ~'}
+        {nl'   Q210=0',' ;DWELL TIME AT TOP ~'}
+        {nl'   Q203='(drill_lower_z +depth):zpos_f,' ;SURFACE COORDINATE ~'}
+        {nl'   Q204='(abs((drill_lower_z +depth)-drill_clearance_z)):zpos_f,' ;2ND SET-UP CLEARANCE ~'}
+        {nl'   Q212='Q212_Decrement,' ;DECREMENT ~'}
+        {nl'   Q213='Q213_Breaks,' ;BREAKS ~'}
+        {nl'   Q205='Q205_Min_Plunging_Depth,' ;MIN. PLUNGING DEPTH ~'}
+        {nl'   Q211='Q211_Dwell_Time,' ;DWELL TIME AT DEPTH ~'}
+        {nl'   Q208=18000',' ;RETRACTION FEED RATE ~'}
+        {nl'   Q256='Q256_Dist_Chip_Break,' ;DIST. FOR CHIP BRKNG'}
+      endif
+
+      if drill_type eq CYCL204                       ; Added for TECHCOM
+         {nb'CYCL DEF 204 BACK BORING ~'}
+         {nl' Q200='safety,' ;SET-UP CLEARANCE. ~'}
+         {nl' Q249='CB_Depth,' ;DEPTH OF COUNTERBORE. ~'}
+         {nl' Q250='Thickness,' ;MATERIAL THICKNESS ~'}
+         {nl' Q251='OffCentre,' ;OFF-CENTER DISTANCE ~'}
+         {nl' Q252='Tool_Edge_Height,' ;TOOL EDGE HEIGHT ~'}
+         {nl' Q253='Pre_Pos_Feed,' ;FEED PRE-POSITIONING ~'}
+         {nl' Q254='feed,' ;FEED COUNTERSINKING ~'}
+         {nl' Q255='dwell,' ;DWELL TIME ~'}
+         {nl' Q203='(drill_lower_z +depth):zpos_f,' ;SURFACE COORDINATE ~'}
+         {nl' Q204='drill_clearance_z:zpos_f,' ;2ND SET-UP CLEARANCE. ~'}
+         {nl' Q214='Direction,' ;DISENGAGING DIRECTN. ~'}
+         {nl' Q336='Spindle_Angle,' ;;ANGLE OF SPINDLE '}
+    
+ endif
+
+      if drill_type eq Tapping
+        {nb'CYCL DEF 209 TAPPING W/ CHIP BRKG ~'}
+        {nl'   Q200='safety,' ;Safety. ~'}
+        {nl'   Q201=-',depth,' ;DEPTH. ~'}
+        {nl'   Q239='tool_drill_lead,' ;PITCH ~'}
+        {nl'   Q203='(drill_lower_z +depth):zpos_f,' ;SURFACE COORDINATE ~' }
+        {nl'   Q204='(abs((drill_lower_z +depth)-drill_clearance_z)):zpos_f,' ;2. Safety ~'}
+        {nl'   Q257='PECKING:zpos_f,' ;DEPTH FOR CHIP BRKNG ~'}
+        {nl'   Q256='(-1*(drill_lower_z +depth)):zpos_f,' ;DIST. FOR CHIP BRKNG ~'}
+        ;{nl'   Q256='(drill_lower_z +depth):zpos_f,' ;DIST. FOR CHIP BRKNG ~'}
+        {nl'   Q336=0',' ;ANGLE OF SPINDLE'}
+      endif 
+
+
+      if drill_type eq boring
+        {nb'CYCL DEF 201 REAMING ~'}
+        {nl'   Q200='safety,' ;Safety. ~'}
+        {nl'   Q201=-',depth,' ;DEPTH ~'}
+        {nl'   Q206='feed,' ;FEED RATE. ~'}
+        {nl'   Q211='Q211_Dwell_Time_Depth,' ;DWELL TIME AT DEPTH ~'}
+        {nl'   Q208='feed,' ;RETRACTION FEED RATE ~'}
+        {nl'   Q203='(drill_lower_z +depth):zpos_f,' ;SURFACE COORDINATE ~'}
+        {nl'   Q204='(abs((drill_lower_z +depth)-drill_clearance_z)):zpos_f,' ;2ND SET-UP CLEARANCE'}
+       endif
+
+
+      if drill_type eq CYCL202
+        {nb'CYCL DEF 202 BORING ~'}
+        {nl'   Q200='safety,' ;Safety. ~'}
+
+        {nl'   Q201=-',depth,' ;DEPTH. ~'} 
+        {nl'   Q206='feed,' ;FEED RATE. ~'}
+        {nl'   Q211='Q211_Dwell_Time_Depth,' ;DWELL TIME AT DEPTH  ~'}
+        {nl'   Q208='feed,' ;RETRACTION FEED RATE ~'}
+        {nl'   Q203='(drill_lower_z +depth):zpos_f,' ;SURFACE COORDINATE ~'}
+        {nl'   Q204='(abs((drill_lower_z +depth)-drill_clearance_z)):zpos_f,' ;2ND SET-UP CLEARANCE ~'}
+        {nl'   Q214=1'' DISENGAGING DIRECTN ~'}
+        {nl'   Q336='Q336_Angle_of_Spindle' ANGLE OF SPINDLE'}
+      endif
+      
+      if drill_type eq CYC240                          ; Added for TECHCOM
+      {nb, 'CYCL DEF 240 CENTERING ~'}
+            
+        {nl'   Q200='safety,' ;SET-UP CLEARANCE ~'}
+        {nl'   Q343=-',DL,' ;SELECT DEPTH/DIA. ~'}
+        {nl'   Q201=-',depth,' ;DEPTH ~'} 
+        {nl'   Q344='DIA_CEN,' ;DIAMETER ~'}
+        {nl'   Q206='feed,' ;FEED RATE. ~'}
+        {nl'   Q211='Dwell ,' ;DWELL TIME AT DEPTH  ~'}
+        {nl'   Q203='(drill_lower_z +depth):zpos_f,' ;SURFACE COORDINATE ~'}
+        {nl'   Q204='(abs((drill_lower_z +depth)-drill_clearance_z)):zpos_f,' ;2ND SET-UP CLEARANCE ~'}
+        
+      endif
+      
+      
+      if drill_type eq CYC208                    ; Added for TECHCOM
+       ; {nb, ';SPIRAL MILL'}
+        {nb'CYCL DEF 208 SPIRAL MILLING ~'}
+        {nl'   Q200 = 'safety:zpos_f ';R PLANE ~'}
+        {nl'   Q201 = '(depth* -1):zpos_f ' ;DEPTH ~'}
+        {nl'   Q206 = 'feed:integer_def_f ' ;PLUNGE FEED ~'}
+        {nl'   Q334 = 'down_step:zpos_f,' ;INFEED PER HELIX ~'}
+        {nl'   Q203 = '(drill_lower_z +depth):zpos_f,' ;SURFACE-COORDINATE ~'}
+        {nl'   Q204 = '(abs((drill_lower_z +depth)-drill_clearance_z)):zpos_f ' ;CLEARANCE HEIGHT ~'}
+        {nl'   Q335 = +'Hole_diam,' ;HOLE DIAMETER ~'}
+        {nl'   Q342 = +'Roughing_dia, ' ;ROUGHING DIAMETER'}
+        if Climbmill eq 1 then
+        {nl'   Q351 = +1',' ;CLIMB MILLING ~'}
+    else
+        {nl'   Q351 = -1',' ;UP CUT MILLING ~'}
+ endif
+ endif
+     
+ if drill_type eq CYC205                                           ; Added for TECHCOM
+     {nb'CYCL DEF 205 UNIVERSAL-PECKING ~'}
+      {nl'   Q200='safety:zpos_f' ;SETUP CLEARANCE ~'}
+      {nl'   Q201='(depth* -1):zpos_f' ;DEPTH ~'}
+      {nl'   Q206='feed:integer_def_f' ;FEED RATE FOR PLUNGING ~'}
+      {nl'   Q202='down_step:zpos_f' ;PLUNGING DEPTH ~'}
+      {nl'   Q203='(drill_lower_z +depth):zpos_f' ;SURFACE COORDINATE ~'}
+      {nl'   Q204='(abs((drill_lower_z +depth)-drill_clearance_z)):zpos_f' ;2ND SET-UP CLEARANCE ~'}
+      {nl'   Q212='Q212_DECREMENT:zpos_f' ;DECREMENT ~'}
+      {nl'   Q205='Q205_MIN_PLUNGING_DEPTH:zpos_f' ;MIN. PLUNGING DEPTH ~'}
+      {nl'   Q258='Q258_UPPER_ADV_STOP_DIST:zpos_f' ;UPPER ADV. STOP DIST ~'}
+      {nl'   Q259='Q259_LOWER_ADV_STOP_DIST:zpos_f' ;LOWER ADV. STOP DIST ~'}
+      {nl'   Q257='Q257_DEPTH_FOR_CHIP_BRKNG:zpos_f' ;DEPTH FOR CHIP BRKNG ~'}
+      {nl'   Q256='Q256_DIST_FOR_CHIP_BRKNG:zpos_f' ;DIST. FOR CHIP BRKNG ~'}
+      {nl'   Q211='Q211_DWELL_TIME_AT_DEPTH:'5.1(P)'' ;DWELL TIME AT DEPTH ~'}
+      {nl'   Q379='Q379_STARTING_POINT:zpos_f' ;STARTING POINT ~'}
+      {nl'   Q253='Q253_F_PRE_POSITIONING:integer_def_f' ;F PRE-POSITIONING'}
+   endif
+
+   if drill_type eq CYC207                                   ; Added for TECHCOM
+    {nb'CYCL DEF 207 RIGID TAPPING NEW ~'}
+        {nl'   Q200='safety,' ;SET-UP CLEARANCE ~'}
+        {nl'   Q201=-',depth,' ;DEPTH ~'}
+        {nl'   Q239='Pitch ,' ;PITCH ~'}
+        {nl'   Q203='(drill_lower_z +depth):zpos_f,' ;SURFACE COORDINATE ~'}
+        {nl'   Q204='drill_clearance_z:zpos_f,' ;2ND SET-UP CLEARANCE '}
+ endif
+ 
+ if drill_type eq CYC241                                     ; Added for TECHCOM
+ 
+      {nb'CYCL DEF 241 SINGLE-LIP DEEP-HOLE DRILLING ~'}
+      {nl'   Q200='safety:zpos_f' ;SETUP CLEARANCE ~'}
+      {nl'   Q201='(depth* -1):zpos_f' ;DEPTH ~'}
+      {nl'   Q206='feed:integer_def_f' ;FEED RATE FOR PLUNGING ~'}
+      {nl'   Q211='Q211_DWELL_TIME:'5.1(P)'' ;DWELL TIME AT DEPTH ~'}
+      {nl'   Q203='(drill_lower_z +depth):zpos_f' ;SURCOORDINATEFACE  ~'}
+      {nl'   Q204='(abs((drill_lower_z +depth)-drill_clearance_z)):zpos_f' ;2ND SET-UP CLEARANCE ~'}
+      {nl'   Q379='Q379_STARTING_POINT:zpos_f' ;STARTING POINT ~'}
+      {nl'   Q253='Q253_F_PREPOSITIONING:integer_def_f' ;F PRE-POSITIONING'}
+      {nl'   Q208='feed,' ;RETRACTION FEED RATE ~'}
+      {nl'   Q426='DIR_SPIND' ;DIR. OF SPINDLE ROT. ~'}
+      {nl'   Q427='ROT_SPEED' ;ROT. SPEED INFEED/OUT. ~'}
+      {nl'   Q428='DRILLING_SPEED' ;DRILLING SPEED. ~'}
+      {nl'   Q429= ''8' ';COOLANT ON ~'}
+      {nl'   Q430= ''9' ';COOLANT OFF ~'}
+      {nl'   Q435='DWELL_DEPTH' ;DWELL DEPTH ~'}
+     
+   endif
+ 
+
+endp
+;-------------------
+
+@drill_point
+
+   if first_drill eq true
+      if machine_plane eq xy or job_plane eq xy
+         change(xpos) = true   ; when xpos = 0 and ypos = 0
+         change(ypos) = true
+      endif
+      if machine_plane eq zx or job_plane eq zx
+         change(xpos) = true   
+         change(zpos) = true
+      endif
+   endif
+
+   {nb,'L' [' X'xhpos],[' Y'yhpos],[' Z'zhpos],' R0 FMAX M99'}
+     
+endp
+
+;-------------------
+
+@end_drill
+
+   if machine_plane eq xy or job_plane eq xy
+      {nb,'Z'drill_clearance_z:zpos_f, ' FMAX'}
+   endif   
+   if machine_plane eq zx or job_plane eq zx
+      {nb,'Y'drill_clearance_z:zpos_f, ' FMAX'}
+   endif
+   
+endp
+
+;-------------------
+
+@mirror
+
+   {nb,'CYCL DEF 8.0 MIRROR IMAGE'}
+   {nb,'CYCL DEF 8.1 '}
+   if mirror_type eq MIRROR_X then
+      {' X'}
+   endif
+   if mirror_type eq MIRROR_Y then
+      {' Y'}
+   endif
+   if mirror_type eq MIRROR_XY then
+      {' X Y'}
+   endif
+        
+endp
+
+;-------------------
+
+@halt_program
+endp
+
+;-------------------
+
+@round_comp
+endp
+
+;-------------------
+
+@start_of_job
+
+
+   {nb,'*     ' upper(job_name)}
+   if msg ne  ''
+      {nb,'; ' upper(msg)}
+   endif
+ 
+   call @udr_def_feed 
+   
+    if job_type ne 'drill' then
+      {nb,'CYCL DEF 32.0 TOLERANCE'}
+      {nb,'CYCL DEF 32.1 T0.01'}
+      {nb,'CYCL DEF 32.2 HSC-MODE:0 TA0.01'}
+   endif
+
+
+      
+   call @udr_additional_mcode
+   first_rapid_move = true
+  ; {nb,'--------trace ------------'}
+  ; {nb,'save_part_home_number = 'save_part_home_number }
+  ; {nb,'part_home_number = 'part_home_number }
+  ; {nb,'prev_tool_number = 'prev_tool_number }
+  ; {nb,'tool_number = 'tool_number  }
+ ;  {nb,'-----------end of trace----------'}
+   
+   
+  if save_part_home_number ne part_home_number ;and tool_number<>prev_tool_number ; YM 27/06/11
+   if not X5_job or not prev_X5_job
+   print_tmatrix = true ; 
+   ;{nb,'print_tmatrix = true'}
+   endif
+ endif  
+   
+endp
+
+;-------------------
+
+@end_of_job
+ 
+   if strJobType eq '5x' or strJobType eq '4x'
+      {nb,'M129'}
+      save_part_home_number = 0       
+   endif 
+   
+   if M0_STOPP ne false
+      {nb,'L M0'}
+   endif
+    prev_tool_number = tool_number ; YM 27/06/11
+   rotary_flag = false
+   if X5_job                       ; YM 27/06/11
+   	 prev_X5_job = true
+   endif
+   
+endp
+
+;-------------------
+
+@assign_axis
+
+endp
+
+;-------------------
+
+@call_simple_proc
+
+   active(message) = FALSE
+   active(parm1)   = FALSE
+   active(parm2)   = FALSE
+   active(parm3)   = FALSE
+   proc_count      = 1
+   call @call_proc
+
+endp
+
+;-------------------
+
+@start_tool
+
+    if tool_direction eq CW then
+        m9 = '4'
+    else              ;  CCW
+        m9 = '3'
+    endif
+;   if strJobType eq '5x'
+;      {' S'finish_spin:spin_f}
+;   else
+;      {' S'spin:spin_f}
+;   endif
+    
+endp
+
+;-------------------
+
+@stop_tool
+
+   {' M05'}
+
+endp
+
+;-------------------
+
+@line_on
+endp
+
+;-------------------
+
+@end_job_procs
+endp
+
+;-------------------
+
+@m_feed_spin
+
+;-------------------------- NEW CHANGE
+ m_feed_flag = true
+   if save_spin ne spin
+  ;     {nl ,''}
+  ;    {nb'TOOL CALL '}
+      save_spin = spin
+      call @start_tool
+   endif
+
+endp
+
+;--------------------------- END NEW CHANGE
+ ; m_feed_flag = true
+  ; if save_spin ne spin
+    ;  {nb,'TOOL CALL 'tool_number' 'plane_letter}
+             ;  if change(spin)
+             ;  {' S'spin:integer_def_f}
+             ;  endif
+
+     ; call @start_tool
+   ;endif
+  ; save_spin = spin 
+  ;  {nb,'L M3'}
+     
+;endp
+
+;-------------------
+
+@line_4x
+
+   if Dreiachs_Ausgabe eq false
+      apos = cpos
+      call @udr_apos_calculation
+      
+      if machine_plane eq ZX
+         call @invert_xpos 
+         {nb,'L'[' X'xpos], [' Z'zpos], [' Y'ypos], ' B'(apos):xpos_f}
+      else
+         {nb,'L'[' X'xpos], [' Y'ypos], [' Z'zpos], ' C'(apos):xpos_f}
+      endif
+      
+      if comp_used
+         {' ' comp }
+      endif
+         
+      call @udr_print_feed
+      strJobType = '4x'  
+      
+      if machine_plane eq ZX
+         call @invert_xpos 
+      endif  
+   endif
+
+endp
+
+;-------------------
+
+@move_4x
+
+   if Dreiachs_Ausgabe eq false   
+      if first_rapid_move eq true
+         if tool_direction eq CW then
+            m_code = '3'
+         else              ;  CCW
+            m_code = '4'
+         endif
+      endif
+   
+      apos = cpos
+      call @udr_apos_calculation
+		
+	   if machine_plane eq ZX
+         call @invert_xpos 
+      endif
+		
+      if first_rapid_move eq true
+         if machine_plane eq XY
+            if rot_axis_type eq axis4_radial
+               xpos = 0
+            else
+               ypos = 0
+            endif
+            {nb,'L'[' X'xpos],[' Y'ypos],[' Z'tool_z_level:zpos_f],' C'(apos):xpos_f}
+            change(xpos) = false
+            change(ypos) = false 
+         endif
+         
+         if machine_plane eq ZX
+            if rot_axis_type eq axis4_radial
+               xpos = 0
+            else
+               zpos = 0
+            endif
+            {nb,'L'[' X'xpos],[' Z'zpos],[' Y'tool_z_level:ypos_f],' B'(apos):xpos_f}
+            change(xpos) = false
+            change(zpos) = false 
+         endif
+         
+         if comp_used
+            {' ' comp}
+         endif
+         {' FMAX M'm_code}
+      endif
+      
+      if machine_plane eq XY
+         {nb,'L'[' X'xpos], [' Y'ypos], [' Z'zpos], ' C'(apos):xpos_f}
+      endif
+      
+      if machine_plane eq ZX
+         {nb,'L'[' X'xpos], [' Z'zpos], [' Y'ypos], ' B'(apos):xpos_f}
+      endif
+   
+      if comp_used
+         {' 'comp}
+      endif
+      {' FMAX'}
+   
+      if first_rapid_move eq true
+         call @udr_cooling
+      endif
+   
+      comp_used = false
+      save_feed = 99999
+      first_rapid_move = false
+      save_part_home_number = 0
+      strJobType = '4x'
+   endif
+   
+endp
+
+;-------------------
+
+@drill4x_pnt
+
+   if Dreiachs_Ausgabe eq false
+      if first_drill eq true
+         xpos = 0
+      endif
+     
+      apos = cpos
+      call @udr_apos_calculation
+      
+      if machine_plane eq xy
+         {nb,'L' [' X'xpos],[' Y'ypos],' C'(apos),' R0 FMAX M99'}
+      endif
+      
+      if machine_plane eq zx
+         call @invert_xpos
+         {nb 'L' [' X'xpos],[' Z'zpos],' B'(apos),' R0 FMAX M99'}
+      endif
+   
+      save_part_home_number = 0
+      strJobType = '4x'
+   endif
+   
+endp
+
+;-------------------
+
+@line_5x
+
+   if first_rapid_move eq true
+      call @move_5x
+      first_rapid_move = false
+   endif
+
+   if Dreiachs_Ausgabe eq false
+      call @udr_apos_calculation
+
+      if machine_plane eq ZX
+         call @invert_xpos 
+      endif   
+                  
+      {nb,'L'[' X'xhpos], [' Y'yhpos], [' Z'zhpos]}
+      
+      if change(apos) or change(bpos)
+         {' C'apos:xpos_f}
+         {' B'bpos:xpos_f}
+      endif  
+        
+      call @udr_print_feed
+      strJobType = '5x'
+      
+      if machine_plane eq ZX
+         call @invert_xpos 
+      endif 
+   endif
+   
+endp
+
+;-------------------
+
+@move_5x
+
+   if Dreiachs_Ausgabe eq false
+      if first_rapid_move eq true
+         if tool_direction eq CW then
+            m_code = '3'
+         else              ;  CCW
+            m_code = '4'
+         endif
+      endif
+   
+      call @udr_apos_calculation  
+   
+      if machine_plane eq ZX
+         call @invert_xpos 
+      endif
+   
+      if first_rapid_move eq true
+         {nb,'CALL LBL 250'}
+         {nb,'L C'apos:xpos_f,' B'bpos:xpos_f, ' R0 FMAX M126'}
+     ; YARON    {nb,'L'[' X'xpos], [' Y'ypos], ' R0 FMAX M'm_code}
+      endif 
+   
+      {nb,'L'[' X'xhpos], [' Y'yhpos], [' Z'zhpos]}
+   
+      if (change(apos) or change(bpos)) and first_rapid_move eq false
+         {' C'apos:xpos_f}
+         {' B'bpos:xpos_f}
+      endif    
+      {' R0 FMAX'}
+      if first_rapid_move eq true
+         {' M128'}
+         call @udr_cooling
+      endif
+      
+      if machine_plane eq ZX
+         call @invert_xpos 
+      endif
+   
+      save_feed = 99999
+      first_rapid_move = false
+      save_part_home_number = 0
+      strJobType = '5x'
+   endif
+   
+endp
+
+;-------------------
+
+@rotary_info
+
+   rotary_flag = true
+   
+endp
+
+;-------------------
+
+@chng_tool_cnext
+   
+   if job_type eq 'drill'
+      cpos = cnext
+   endif
+    
+endp
+
+;-------------------
+
+@init_cpos
+endp
+
+@move4x_dir
+endp
+
+@line4x_dir
+endp
+
+@move4x_polar
+endp
+
+@line4x_polar
+endp
+
+@arc4x_polar
+endp
+
+@move4x_cartesian
+endp
+
+@line4x_cartesian
+endp
+
+@arc4x_cartesian
+endp
+
+@drill4x_polar
+endp
+
+@drill4x_cartesian
+endp
+
+@call_prms
+endp
+
+;-------------------
+
+@tmatrix
+
+   if fourth_axis_flag eq true
+      fourth_axis_on = false
+      fourth_axis_flag = false
+    endif
+
+   if Dreiachs_Ausgabe eq false
+      if print_tmatrix eq true
+          if fourth_axis_on eq false
+            call @udr_home_data_new
+          endif
+         print_tmatrix = false
+      endif
+   endif
+endp
+
+;-------------------
+
+@fixture_change
+
+   {nb,'* - 'upper(fixture_name)}
+   {nb,'; 'upper(fixture_message)}
+	
+endp
+
+;-------------------
+
+@invert_xpos
+     local logical xpos_modal
+     xpos_modal = change(xpos)
+     xpos = xpos*(-1)
+     change(xpos) = xpos_modal
+endp
+
+;-------------------
+
+@udr_home_data_new	
+  
+
+   
+ ;  if save_part_home_number ne part_home_number 
+      if home_user_name ne ''
+         {nb,'; 'upper(home_user_name)' BEI NP 'mac_number}
+      else
+         {nb,'; POSITION ',position' BEI NP 'mac_number}
+      endif   
+
+      if change_ref_flag eq false
+        {nb,'CALL LBL 250'}
+      endif   
+
+        if change_ref_flag eq true			; for transform move 
+       ;  {nb,'CYCL DEF 7.1 X'(shift_x + XHOME):ypos_f}
+       ;  {nb,'CYCL DEF 7.2 Y'(shift_y + YHOME):ypos_f}
+       ;  {nb,'CYCL DEF 7.3 Z'(shift_z + ZHOME):ypos_f}
+         else    ;YARON
+        {nb,'CYCL DEF 7.0 DATUM SHIFT'}
+        {nb,'CYCL DEF 7.1 X'shift_x:ypos_f}   ;YARON
+        {nb,'CYCL DEF 7.2 Y'shift_y:ypos_f}  ;YARON 
+        {nb,'CYCL DEF 7.3 Z'shift_z:ypos_f}   ;YARON
+       endif
+         ;;;   if save_part_home_number ne part_home_number
+           ;    {nb, 'L Z0 R0 F MAX M91'}
+           ;    {nb, 'L Y-1 R0 F MAX M91'}
+           ;    {nb 'L X-600 FMAX'}  
+        ;;;     endif
+
+        {nb,'PLANE RESET STAY'}
+         {nb, 'M140 MB MAX'}
+             {nb, 'L Z0 R0 F MAX M91'}
+             {nb, 'L Y0 R0 F MAX M91'}
+             {nb, 'L X0 R0 F MAX M91'}
+         ;    {nb,'PLANE RESET STAY'}
+            {nb,'M01'}
+     
+
+      {nb,'PLANE SPATIAL SPA'(rotate_angle_x*-1):xpos_f' SPB'(rotate_angle_y):xpos_f' SPC'((rotate_angle_z*-1)+angle):xpos_f}
+      {' TURN F5000'}
+      {' SEQ-'} 
+      {' TABLE ROT'}
+      {nb, 'M3'}
+      {nb, 'M140 MB MAX'}
+      
+      
+     save_part_home_number = part_home_number
+
+                 if  rotate_angle_x  ne 0       
+                    xpos = xnext
+                    ypos = ynext
+                 
+                     {nb, 'L Z'tool_z_level' R0 F MAX'}
+                      if inc_letter ne 'I'
+                      {nb 'L'[' X'xpos],[' Y'ypos]' FMAX'}
+                      else
+                      {nb 'L'[' IX'xpos],[' IY'ypos]' FMAX'}
+                     endif 
+               endif
+;    endif        
+endp
+
+;-------------------
+
+@udr_plane_relative
+
+   if next_command ne '@end_program' or next_command ne '@tmatrix'
+      if rotate_angle_x ne 0
+         {nb,'PLANE RELATIV SPA'(rotate_angle_x):xpos_f, ' STAY'}
+      endif
+      if rotate_angle_y ne 0
+         {nb,'PLANE RELATIV SPB'(rotate_angle_y*-1):xpos_f, ' STAY'}
+      endif
+      if rotate_angle_z ne 0
+         {nb,'PLANE RELATIV SPC'(rotate_angle_z):xpos_f, ' STAY'}
+      endif
+      {nb,'CYCL DEF 7.0 DATUM SHIFT'}
+      {nb,'CYCL DEF 7.1 X+0'}
+      {nb,'CYCL DEF 7.2 Y+0'}
+      {nb,'CYCL DEF 7.3 Z+0'}  
+      {nb,'PLANE RELATIV SPC'angle_rel:xpos_f, ' STAY'}
+      {nb,'CYCL DEF 7.0 NULLPUNKT'}
+      {nb,'CYCL DEF 7.1 IX'shift_x:ypos_f}
+      {nb,'CYCL DEF 7.2 IY'shift_y:ypos_f}
+      {nb,'CYCL DEF 7.3 IZ'shift_z:ypos_f}  
+      if rotate_angle_z ne 0
+         {nb,'PLANE RELATIV SPC'(rotate_angle_z*-1):xpos_f}
+         if rotate_angle_y ne 0 or rotate_angle_x ne 0
+            {' STAY'}
+         else
+            {' TURN'}
+         endif
+      endif
+      if rotate_angle_y ne 0
+         {nb,'PLANE RELATIV SPB'(rotate_angle_y):xpos_f} 
+         if rotate_angle_x ne 0
+            {' STAY'}
+         else
+            {' TURN'}
+         endif
+         {' F9999', ' SEQ-'}
+      endif
+      if rotate_angle_x ne 0
+         {nb,'PLANE RELATIV SPA'(rotate_angle_x):xpos_f, ' TURN'}
+      endif
+   endif
+    
+endp
+
+;-------------------
+
+@udr_reset_of_4th5th_axis
+              
+   {nb,'LBL 250'}
+   call @udr_retreat_M91
+   {nb,'PLANE RESET STAY'}
+   {nb,'CYCL DEF 7.0 DATUM SHIFT'}
+   {nb,'CYCL DEF 7.1 X+0'}
+   {nb,'CYCL DEF 7.2 Y+0'}
+   {nb,'CYCL DEF 7.3 Z+0'}
+   {nb,'LBL 0'}
+   {nb,';'}
+   
+   {nb,'LBL 251'}
+   call @udr_retreat_M91
+   {nb,'PLANE RESET TURN FMAX'}
+   {nb,'CYCL DEF 7.0 DATUM SHIFT'}
+   {nb,'CYCL DEF 7.1 X+0'}
+   {nb,'CYCL DEF 7.2 Y+0'}
+   {nb,'CYCL DEF 7.3 Z+0'}
+   {nb,'LBL 0'}
+   {nb,';'}
+   
+endp
+
+;-------------------
+
+@udr_blk_form 
+
+   if stock_x eq 0 and stock_y eq 0 and stock_z eq 0
+      stock_x_minus = -100
+      stock_y_minus = -100
+      stock_x_plus = 100
+      stock_y_plus = 100
+   endif
+
+   if stock_z_plus eq stock_z_minus
+      stock_z_minus = zero_plane
+      stock_z_plus = work_upper_plane
+   endif
+ 
+   {nb,'BLK FORM 0.1 Z X', stock_x_minus:xpos_f, ' Y', stock_y_minus:xpos_f, ' Z', stock_z_minus:xpos_f}
+   {nb,'BLK FORM 0.2 X', stock_x_plus:xpos_f,' Y', stock_y_plus:xpos_f,' Z', stock_z_plus:xpos_f}
+ 
+endp
+
+;-------------------
+
+@udr_head
+
+   {nb,'; PART NAME    : 'upper(part_name)}
+   {nb,'; PROGRAMM NO  : 'program_number}
+   {nb,'; DATE - TIME  : 'date' - 'time}
+   {nb,'* USED TOOLS:'}
+      
+endp
+
+;-------------------
+
+@udr_msg_tool
+
+   if tool_message eq ''
+      tool_message = tool_user_type
+   endif
+
+   {nb,'; 'upper(tool_message)}
+
+   if msg_mill_tool1 ne ''
+      {nb,'; 'msg_mill_tool1}
+   endif
+   if msg_mill_tool2 ne ''
+      {nb,'; 'msg_mill_tool2}
+   endif
+   if msg_mill_tool3 ne ''
+      {nb,'; 'msg_mill_tool3}
+   endif
+   if msg_mill_tool4 ne ''
+      {nb,'; 'msg_mill_tool4}
+   endif
+   if msg_mill_tool5 ne ''
+      {nb,'; 'msg_mill_tool5}
+   endif
+    
+endp
+
+;-------------------
+
+
+@udr_cooling
+
+   if KUEHLUNG_EIN eq true
+      {nb, 'M8'}
+   endif 
+   
+   if IKZ_EIN ne false
+      {' M7'}
+   endif
+   
+ ;  if KUEHLUNG_EIN eq false and IKZ_EIN eq false and change_tool_flag eq false
+ ;     {' M9'}
+ ;  endif
+
+   if LUFT_EIN eq true
+      {nb, 'M25'}
+   endif 
+   
+   if IKZ_LUFT_EIN ne false
+      {nb, 'M26'}
+   endif
+   
+ ;  if LUFT_EIN eq false and IKZ_LUFT_EIN eq false and change_tool_flag eq false
+ ;     {' M9'}
+ ;  endif
+
+endp
+
+;--------------
+
+@udr_additional_mcode
+   
+   if ZUSAETZL_M_CODE ne 0
+      {nb,'M'ZUSAETZL_M_CODE}
+   endif
+   
+endp
+
+;--------------
+
+@udr_look_ahead
+  
+   {nb,'M120 LA'M120_LA}
+   
+endp
+
+;--------------
+
+@udr_retreat_M91
+
+   {nb,'L Z0.000 R0 FMAX M91'}
+   if X_value_M91 ne 0 and Y_value_M91 ne 0
+      {nb,'L X'X_value_M91:xpos_f, ' Y'Y_value_M91:ypos_f, ' R0 FMAX M91'}
+   endif
+   
+endp
+
+;--------------
+
+@udr_apos_calculation
+
+   local numeric new_apos
+
+   apos =(apos + angle)
+   new_apos = frac(apos/360)
+   apos = (new_apos * 360)
+   
+endp
+
+;------------------
+
+@udr_print_feed
+
+   local logical only_once
+   only_once = false
+   
+   if feed <> save_feed or change(feed) eq true
+      m_feed_flag = true
+   endif
+
+   if m_feed_flag eq true
+      if Parameter_Vorschub eq false
+         {' F'feed:feed_f}
+      else   
+         if left(job_type,2) eq '5x'
+            if feed eq feed_rate 
+               only_once = true
+               {' F+Q10'}
+            endif
+            if feed eq z_feed
+               if only_once eq false
+                  only_once = true
+                  {' F+Q11'}
+               endif
+            endif
+            if feed eq finish_feed
+               if only_once eq false
+                  only_once = true
+                  {' F+Q12'}
+               endif
+            endif     
+         endif   
+         if hsm_job eq true
+            if feed_type eq 'ramp_up_feed'
+               {' F+Q14'}
+            endif
+            if feed_type eq 'ramp_down_feed'
+               {' F+Q11'}
+            endif
+            if feed_type eq 'feed_rate'
+               if feed eq feed_rate
+                  {' F+Q10'}
+               else  ;feed = feed_rapid
+                  {' F+Q15'}
+               endif
+            endif   
+         endif
+         if left(job_type,3) ne 'hsm'
+            if left(job_type,2) ne '5x'
+               if feed_type eq 'z_feed'
+                  {' F+Q11'}
+               endif
+               if feed_type eq 'feed_rate'
+                  if feed eq finish_feed
+                     {' F+Q12'}
+                  else  ;feed = xy feed
+                     {' F+Q10'} 
+                  endif    
+               endif
+            endif
+        endif
+      endif
+      m_feed_flag = false
+      save_feed = feed
+   endif
+   
+endp
+ 
+;--------------------
+
+@udr_def_feed
+
+   if Parameter_Vorschub eq true
+      {nb,'FN0: Q10='feed_rate:integer_def_f, ' ; XY-VORSCHUB'}   
+      if hsm_job eq true
+	 {nb,'FN0: Q11='feed_ramp_down:integer_def_f' ; ABWAERTS-VORSCHUB'}
+	 {nb,'FN0: Q14='feed_ramp_up:integer_def_f' ; AUFWAERTS-VORSCHUB'}
+	 {nb,'FN0: Q15='feed_rapid:integer_def_f' ; RAPID-VORSCHUB'}
+      else
+         if left(job_type,2) eq '5x' 
+            {nb,'FN0: Q11='z_feed:integer_def_f' ; Z-VORSCHUB'}
+	    {nb,'FN0: Q12='finish_feed:integer_def_f' ; RUECKZUG-VORSCHUB'}
+         else  
+	    {nb,'FN0: Q11='z_feed:integer_def_f' ; Z-VORSCHUB'}
+	    {nb,'FN0: Q12='finish_feed:integer_def_f' ; SCHLICHT-VORSCHUB'}
+         endif
+      endif
+   endif
+      
+endp
+
+
