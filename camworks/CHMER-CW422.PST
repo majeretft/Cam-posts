@@ -427,7 +427,7 @@ cancel_offset
 315. Minimum part heigth? 0.00000
 316. When using variable "stop_distance_before_end_of_glue_stop" distance from end of glue stop im mm ? 0.00000
 
-414. Number of decimal places for metric numbers ? 4
+414. Number of decimal places for metric numbers ? 3
 415. Number of decimal places for english numbers? 5
 416. G code that is used to specify rapid move? 0
 417. G code that is used to specify feed move? 1
